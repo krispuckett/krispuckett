@@ -1,9 +1,9 @@
 'use client';
 
-import { useScroll, useTransform, motion } from 'framer-motion';
+import { useScroll, useTransform, motion, useMotionValueEvent } from 'framer-motion';
+import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import HeroOverlay from '@/components/HeroOverlay';
-import DiveTransition from '@/components/DiveTransition';
 import Navigation from '@/components/Navigation';
 import SiteContent from '@/components/SiteContent';
 
@@ -15,54 +15,68 @@ const OceanCanvas = dynamic(() => import('@/components/OceanCanvas'), {
   ),
 });
 
-function OceanScene() {
-  const { scrollYProgress } = useScroll();
-
-  // Camera Y position for dive effect - goes down as we scroll
-  const cameraY = useTransform(scrollYProgress, [0, 0.4], [0, -15]);
-
-  // Ocean shader opacity - fades out after dive
-  const oceanOpacity = useTransform(scrollYProgress, [0.3, 0.5], [1, 0]);
-
-  return (
-    <motion.div style={{ opacity: oceanOpacity }} className="fixed inset-0 z-0">
-      <OceanCanvas cameraY={cameraY.get()} isActive={true} />
-    </motion.div>
-  );
-}
-
-function HeroSection() {
-  const { scrollYProgress } = useScroll();
-
-  // Hero overlay opacity (fades out as we dive)
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
-
-  return (
-    <motion.div style={{ opacity: heroOpacity }}>
-      <HeroOverlay opacity={1} />
-    </motion.div>
-  );
-}
-
 export default function Home() {
+  const { scrollYProgress } = useScroll();
+  const [cameraY, setCameraY] = useState(0);
+  const [shaderOpacity, setShaderOpacity] = useState(1);
+  const [heroOpacity, setHeroOpacity] = useState(1);
+  const [isShaderActive, setIsShaderActive] = useState(true);
+
+  // Transform values
+  const cameraYTransform = useTransform(scrollYProgress, [0, 0.3], [0, -10]);
+  const shaderOpacityTransform = useTransform(scrollYProgress, [0.2, 0.4], [1, 0]);
+  const heroOpacityTransform = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
+  const contentY = useTransform(scrollYProgress, [0.15, 0.4], ['100vh', '0vh']);
+  const contentOpacity = useTransform(scrollYProgress, [0.2, 0.35], [0, 1]);
+
+  // Listen to scroll changes and update state
+  useMotionValueEvent(cameraYTransform, 'change', (latest) => {
+    setCameraY(latest);
+  });
+
+  useMotionValueEvent(shaderOpacityTransform, 'change', (latest) => {
+    setShaderOpacity(latest);
+    setIsShaderActive(latest > 0.01);
+  });
+
+  useMotionValueEvent(heroOpacityTransform, 'change', (latest) => {
+    setHeroOpacity(latest);
+  });
+
   return (
     <main className="relative">
-      {/* Ocean shader background */}
-      <OceanScene />
+      {/* Ocean shader background - fixed, fades out on scroll */}
+      <motion.div
+        className="fixed inset-0 z-0"
+        style={{ opacity: shaderOpacityTransform }}
+      >
+        <OceanCanvas cameraY={cameraY} isActive={isShaderActive} />
+      </motion.div>
 
-      {/* Hero overlay text */}
-      <HeroSection />
+      {/* Hero overlay text - fixed, fades out first */}
+      <motion.div
+        className="fixed inset-0 z-10 pointer-events-none"
+        style={{ opacity: heroOpacityTransform }}
+      >
+        <HeroOverlay />
+      </motion.div>
 
-      {/* Navigation */}
+      {/* Navigation - appears after scroll */}
       <Navigation />
 
-      {/* Spacer for scroll - this creates the dive effect */}
-      <div className="h-[60vh]" />
+      {/* Scroll spacer - creates the "dive" scroll distance */}
+      <div className="h-[100vh]" />
 
-      {/* Dive transition and content */}
-      <DiveTransition>
+      {/* Main content - scrolls up into view */}
+      <motion.div
+        className="relative z-20 bg-[#1a1a1a]"
+        style={{
+          y: contentY,
+          opacity: contentOpacity,
+        }}
+      >
         <SiteContent />
-      </DiveTransition>
+      </motion.div>
     </main>
   );
 }

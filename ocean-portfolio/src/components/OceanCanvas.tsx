@@ -329,6 +329,7 @@ export default function OceanCanvas({
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.domElement.style.touchAction = 'none'; // Enable pointer events on touch
     containerRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
@@ -411,12 +412,15 @@ export default function OceanCanvas({
   return (
     <div
       ref={containerRef}
-      className={`fixed inset-0 ${className}`}
-      style={{ zIndex: 0, cursor: isDragging ? 'grabbing' : 'grab' }}
+      className={`absolute inset-0 ${className}`}
+      style={{
+        cursor: isDragging ? 'grabbing' : 'grab',
+        touchAction: 'none',
+      }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
-      onPointerLeave={handlePointerUp}
+      onPointerCancel={handlePointerUp}
     />
   );
 }
