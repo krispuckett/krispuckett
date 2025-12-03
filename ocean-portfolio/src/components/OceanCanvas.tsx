@@ -187,7 +187,6 @@ void main() {
 `;
 
 interface OceanCanvasProps {
-  cameraY?: number;
   isActive?: boolean;
   className?: string;
 }
@@ -201,14 +200,19 @@ export default function OceanCanvas({
   const materialRef = useRef<THREE.ShaderMaterial | null>(null);
   const animationFrameRef = useRef<number>(0);
   const startTimeRef = useRef<number>(Date.now());
+  // Track if user has interacted - shader uses (0,0) as "no interaction" signal
+  const hasInteractedRef = useRef(false);
   const mouseRef = useRef({ x: 0, y: 0, isDown: false });
   const mouseTargetRef = useRef({ x: 0, y: 0 });
 
   // Mouse handlers
   const handleMouseDown = useCallback((e: MouseEvent) => {
+    hasInteractedRef.current = true;
     mouseRef.current.isDown = true;
     mouseRef.current.x = e.clientX;
     mouseRef.current.y = e.clientY;
+    mouseTargetRef.current.x = e.clientX;
+    mouseTargetRef.current.y = e.clientY;
   }, []);
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
@@ -225,6 +229,7 @@ export default function OceanCanvas({
   // Touch handlers
   const handleTouchStart = useCallback((e: TouchEvent) => {
     if (e.touches.length > 0) {
+      hasInteractedRef.current = true;
       mouseRef.current.isDown = true;
       mouseRef.current.x = e.touches[0].clientX;
       mouseRef.current.y = e.touches[0].clientY;
@@ -307,18 +312,22 @@ export default function OceanCanvas({
       const elapsedTime = (Date.now() - startTimeRef.current) / 1000;
       uniforms.iTime.value = elapsedTime;
 
-      // Smooth mouse interpolation
-      if (mouseRef.current.isDown) {
-        mouseRef.current.x += (mouseTargetRef.current.x - mouseRef.current.x) * 0.1;
-        mouseRef.current.y += (mouseTargetRef.current.y - mouseRef.current.y) * 0.1;
-      }
+      // Only update mouse if user has interacted
+      if (hasInteractedRef.current) {
+        // Smooth mouse interpolation while dragging
+        if (mouseRef.current.isDown) {
+          mouseRef.current.x += (mouseTargetRef.current.x - mouseRef.current.x) * 0.15;
+          mouseRef.current.y += (mouseTargetRef.current.y - mouseRef.current.y) * 0.15;
+        }
 
-      uniforms.iMouse.value.set(
-        mouseRef.current.x,
-        window.innerHeight - mouseRef.current.y, // Flip Y for shader
-        mouseRef.current.isDown ? 1 : 0,
-        0
-      );
+        uniforms.iMouse.value.set(
+          mouseRef.current.x,
+          window.innerHeight - mouseRef.current.y, // Flip Y for shader
+          mouseRef.current.isDown ? 1 : 0,
+          0
+        );
+      }
+      // If no interaction, iMouse stays at (0,0,0,0) and shader uses default view
 
       renderer.render(scene, camera);
     };
