@@ -1,11 +1,9 @@
 'use client';
 
-import { useEffect, useRef, useMemo } from 'react';
+import { useEffect, useRef, useMemo, useState, useCallback } from 'react';
 import * as THREE from 'three';
-import { useMousePosition } from '@/hooks/useMousePosition';
 import { useSunPosition } from '@/hooks/useSunPosition';
 
-// Import shader source as strings
 const vertexShader = `
 varying vec2 vUv;
 
@@ -20,19 +18,18 @@ precision highp float;
 
 uniform vec2 iResolution;
 uniform float iTime;
-uniform vec4 iMouse;
+uniform vec2 iMouse;
 uniform float sunHeight;
 uniform float sunAngle;
 uniform float cameraY;
+uniform float cameraPitch;
 
 varying vec2 vUv;
 
-// Constants
 const int NUM_STEPS = 8;
 const float PI = 3.141592653589793;
 const float EPSILON = 1e-3;
 
-// Sea parameters
 const int ITER_GEOMETRY = 3;
 const int ITER_FRAGMENT = 5;
 const float SEA_HEIGHT = 0.6;
@@ -224,9 +221,9 @@ vec3 getPixel(in vec2 coord, float time) {
     uv = uv * 2.0 - 1.0;
     uv.x *= iResolution.x / iResolution.y;
 
-    vec2 mouse = iMouse.xy / iResolution.xy;
-    float angleY = (mouse.x - 0.5) * PI * 0.5;
-    float angleX = (mouse.y - 0.5) * PI * 0.25;
+    // Use mouse for horizontal rotation, cameraPitch for vertical
+    float angleY = iMouse.x * PI * 0.5;  // Horizontal pan (-PI/4 to PI/4)
+    float angleX = cameraPitch;           // Vertical tilt from uniform
 
     vec3 ang = vec3(0.0, angleY, angleX);
     vec3 ori = vec3(0.0, 3.5 + cameraY, time * 2.0);
@@ -277,42 +274,70 @@ export default function OceanCanvas({
   const animationFrameRef = useRef<number>(0);
   const startTimeRef = useRef<number>(Date.now());
 
-  const mousePosition = useMousePosition();
+  // Drag state for camera rotation
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [cameraRotation, setCameraRotation] = useState({ x: 0, y: 0 }); // x = horizontal pan, y = pitch
+  const [rotationOffset, setRotationOffset] = useState({ x: 0, y: 0 });
+
   const sunPosition = useSunPosition();
 
-  // Create uniforms
+  // Create uniforms - start with horizontal view (pitch looking slightly down at waves)
   const uniforms = useMemo(
     () => ({
       iResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
       iTime: { value: 0.0 },
-      iMouse: { value: new THREE.Vector4(0.5, 0.5, 0, 0) },
+      iMouse: { value: new THREE.Vector2(0.0, 0.0) }, // x = horizontal rotation (-0.5 to 0.5)
       sunHeight: { value: 0.5 },
       sunAngle: { value: Math.PI / 2 },
       cameraY: { value: 0.0 },
+      cameraPitch: { value: 0.15 }, // Slight downward tilt to see waves
     }),
     []
   );
+
+  // Mouse/touch handlers for drag interaction
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    setIsDragging(true);
+    setDragStart({ x: e.clientX, y: e.clientY });
+    setRotationOffset(cameraRotation);
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  }, [cameraRotation]);
+
+  const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    if (!isDragging) return;
+
+    const deltaX = (e.clientX - dragStart.x) / window.innerWidth;
+    const deltaY = (e.clientY - dragStart.y) / window.innerHeight;
+
+    // Clamp rotation values
+    const newX = Math.max(-0.5, Math.min(0.5, rotationOffset.x + deltaX));
+    const newY = Math.max(-0.3, Math.min(0.4, rotationOffset.y + deltaY * 0.5));
+
+    setCameraRotation({ x: newX, y: newY });
+  }, [isDragging, dragStart, rotationOffset]);
+
+  const handlePointerUp = useCallback((e: React.PointerEvent) => {
+    setIsDragging(false);
+    (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+  }, []);
 
   // Initialize Three.js
   useEffect(() => {
     if (!containerRef.current) return;
 
-    // Create renderer
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     containerRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
-    // Create scene
     const scene = new THREE.Scene();
     sceneRef.current = scene;
 
-    // Create orthographic camera for fullscreen quad
     const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
     cameraRef.current = camera;
 
-    // Create shader material
     const material = new THREE.ShaderMaterial({
       vertexShader,
       fragmentShader,
@@ -320,12 +345,10 @@ export default function OceanCanvas({
     });
     materialRef.current = material;
 
-    // Create fullscreen quad
     const geometry = new THREE.PlaneGeometry(2, 2);
     const mesh = new THREE.Mesh(geometry, material);
     scene.add(mesh);
 
-    // Handle resize
     const handleResize = () => {
       const width = window.innerWidth;
       const height = window.innerHeight;
@@ -335,7 +358,6 @@ export default function OceanCanvas({
 
     window.addEventListener('resize', handleResize);
 
-    // Animation loop
     const animate = () => {
       if (!isActive) {
         animationFrameRef.current = requestAnimationFrame(animate);
@@ -351,7 +373,6 @@ export default function OceanCanvas({
 
     animate();
 
-    // Cleanup
     return () => {
       cancelAnimationFrame(animationFrameRef.current);
       window.removeEventListener('resize', handleResize);
@@ -364,17 +385,13 @@ export default function OceanCanvas({
     };
   }, [uniforms, isActive]);
 
-  // Update mouse position uniform
+  // Update camera rotation uniforms
   useEffect(() => {
     if (materialRef.current) {
-      materialRef.current.uniforms.iMouse.value.set(
-        mousePosition.x,
-        mousePosition.y,
-        0,
-        0
-      );
+      materialRef.current.uniforms.iMouse.value.set(cameraRotation.x, 0);
+      materialRef.current.uniforms.cameraPitch.value = 0.15 + cameraRotation.y;
     }
-  }, [mousePosition]);
+  }, [cameraRotation]);
 
   // Update sun position uniform
   useEffect(() => {
@@ -395,7 +412,11 @@ export default function OceanCanvas({
     <div
       ref={containerRef}
       className={`fixed inset-0 ${className}`}
-      style={{ zIndex: 0 }}
+      style={{ zIndex: 0, cursor: isDragging ? 'grabbing' : 'grab' }}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerLeave={handlePointerUp}
     />
   );
 }
