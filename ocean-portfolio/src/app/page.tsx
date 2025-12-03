@@ -17,30 +17,17 @@ const OceanCanvas = dynamic(() => import('@/components/OceanCanvas'), {
 
 export default function Home() {
   const { scrollYProgress } = useScroll();
-  const [cameraY, setCameraY] = useState(0);
-  const [shaderOpacity, setShaderOpacity] = useState(1);
-  const [heroOpacity, setHeroOpacity] = useState(1);
   const [isShaderActive, setIsShaderActive] = useState(true);
 
   // Transform values
-  const cameraYTransform = useTransform(scrollYProgress, [0, 0.3], [0, -10]);
   const shaderOpacityTransform = useTransform(scrollYProgress, [0.2, 0.4], [1, 0]);
   const heroOpacityTransform = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
   const contentY = useTransform(scrollYProgress, [0.15, 0.4], ['100vh', '0vh']);
   const contentOpacity = useTransform(scrollYProgress, [0.2, 0.35], [0, 1]);
 
-  // Listen to scroll changes and update state
-  useMotionValueEvent(cameraYTransform, 'change', (latest) => {
-    setCameraY(latest);
-  });
-
+  // Pause shader when scrolled past for performance
   useMotionValueEvent(shaderOpacityTransform, 'change', (latest) => {
-    setShaderOpacity(latest);
     setIsShaderActive(latest > 0.01);
-  });
-
-  useMotionValueEvent(heroOpacityTransform, 'change', (latest) => {
-    setHeroOpacity(latest);
   });
 
   return (
@@ -50,7 +37,7 @@ export default function Home() {
         className="fixed inset-0 z-0"
         style={{ opacity: shaderOpacityTransform }}
       >
-        <OceanCanvas cameraY={cameraY} isActive={isShaderActive} />
+        <OceanCanvas isActive={isShaderActive} />
       </motion.div>
 
       {/* Hero overlay text - fixed, fades out first */}
