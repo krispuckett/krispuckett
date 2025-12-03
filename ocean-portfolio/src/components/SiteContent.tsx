@@ -252,13 +252,21 @@ export default function SiteContent() {
       </section>
 
       {/* Footer */}
-      <footer className="px-6 md:px-12 py-10 border-t border-white/5">
-        <div className="max-w-[680px] mx-auto flex items-center justify-between">
-          <p className="text-fluid-xs text-white/25 tracking-wide">
-            Made with craft and optimism
-          </p>
-          <p className="text-fluid-xs text-white/20">
-            {new Date().getFullYear()}
+      <footer className="px-6 md:px-12 py-12 border-t border-white/5">
+        <div className="max-w-[680px] mx-auto space-y-6">
+          <div className="flex items-center justify-between">
+            <p className="text-fluid-xs text-white/25 tracking-wide">
+              Made with craft and optimism
+            </p>
+            <p className="text-fluid-xs text-white/20">
+              {new Date().getFullYear()}
+            </p>
+          </div>
+          {/* Colophon */}
+          <p className="text-fluid-xs text-white/15 leading-relaxed">
+            Built with Next.js, Three.js, and Claude Code.
+            <br />
+            Ocean shader adapted from afl_ext&apos;s Seascape.
           </p>
         </div>
       </footer>
