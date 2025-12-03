@@ -200,6 +200,9 @@ export default function OceanCanvas({
   const materialRef = useRef<THREE.ShaderMaterial | null>(null);
   const animationFrameRef = useRef<number>(0);
   const startTimeRef = useRef<number>(Date.now());
+  // Use ref for isActive so animation loop doesn't need to be recreated
+  const isActiveRef = useRef(isActive);
+  isActiveRef.current = isActive;
   // Track if user has interacted - shader uses (0,0) as "no interaction" signal
   const hasInteractedRef = useRef(false);
   const mouseRef = useRef({ x: 0, y: 0, isDown: false });
@@ -307,7 +310,8 @@ export default function OceanCanvas({
     const animate = () => {
       animationFrameRef.current = requestAnimationFrame(animate);
 
-      if (!isActive) return;
+      // Use ref to check isActive so we don't recreate the effect
+      if (!isActiveRef.current) return;
 
       const elapsedTime = (Date.now() - startTimeRef.current) / 1000;
       uniforms.iTime.value = elapsedTime;
@@ -351,7 +355,7 @@ export default function OceanCanvas({
         containerRef.current.removeChild(renderer.domElement);
       }
     };
-  }, [isActive, handleMouseDown, handleMouseMove, handleMouseUp, handleTouchStart, handleTouchMove, handleTouchEnd]);
+  }, [handleMouseDown, handleMouseMove, handleMouseUp, handleTouchStart, handleTouchMove, handleTouchEnd]);
 
   return (
     <div
