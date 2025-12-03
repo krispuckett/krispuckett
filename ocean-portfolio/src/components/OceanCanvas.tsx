@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 
 const vertexShader = `
@@ -94,7 +94,6 @@ vec3 getRay(vec2 fragCoord) {
   vec3 proj = normalize(vec3(uv.x, uv.y, 1.5));
 
   vec2 normalizedMouse = iMouse.xy / iResolution.xy;
-  // Default to looking slightly down at horizon when no mouse input
   float mouseX = normalizedMouse.x;
   float mouseY = normalizedMouse.y == 0.0 ? 0.27 : normalizedMouse.y;
 
@@ -190,75 +189,27 @@ interface OceanCanvasProps {
   className?: string;
 }
 
-export default function OceanCanvas({
-  className = '',
-}: OceanCanvasProps) {
+export default function OceanCanvas({ className = '' }: OceanCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
-  const animationFrameRef = useRef<number>(0);
-  const startTimeRef = useRef<number>(Date.now());
-
-  // Track if user has interacted - shader uses (0,0) as "no interaction" signal
-  const hasInteractedRef = useRef(false);
-  const mouseRef = useRef({ x: 0, y: 0, isDown: false });
-  const mouseTargetRef = useRef({ x: 0, y: 0 });
-
-  // Mouse handlers
-  const handleMouseDown = useCallback((e: MouseEvent) => {
-    hasInteractedRef.current = true;
-    mouseRef.current.isDown = true;
-    mouseRef.current.x = e.clientX;
-    mouseRef.current.y = e.clientY;
-    mouseTargetRef.current.x = e.clientX;
-    mouseTargetRef.current.y = e.clientY;
-  }, []);
-
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (mouseRef.current.isDown) {
-      mouseTargetRef.current.x = e.clientX;
-      mouseTargetRef.current.y = e.clientY;
-    }
-  }, []);
-
-  const handleMouseUp = useCallback(() => {
-    mouseRef.current.isDown = false;
-  }, []);
-
-  // Touch handlers
-  const handleTouchStart = useCallback((e: TouchEvent) => {
-    if (e.touches.length > 0) {
-      hasInteractedRef.current = true;
-      mouseRef.current.isDown = true;
-      mouseRef.current.x = e.touches[0].clientX;
-      mouseRef.current.y = e.touches[0].clientY;
-      mouseTargetRef.current.x = e.touches[0].clientX;
-      mouseTargetRef.current.y = e.touches[0].clientY;
-    }
-  }, []);
-
-  const handleTouchMove = useCallback((e: TouchEvent) => {
-    if (e.touches.length > 0 && mouseRef.current.isDown) {
-      mouseTargetRef.current.x = e.touches[0].clientX;
-      mouseTargetRef.current.y = e.touches[0].clientY;
-    }
-  }, []);
-
-  const handleTouchEnd = useCallback(() => {
-    mouseRef.current.isDown = false;
-  }, []);
 
   useEffect(() => {
     if (!containerRef.current) return;
 
+    const container = containerRef.current;
+    let animationFrameId: number;
+    const startTime = Date.now();
+    let hasInteracted = false;
+    const mouse = { x: 0, y: 0, isDown: false };
+    const mouseTarget = { x: 0, y: 0 };
+
     // Create renderer
     const renderer = new THREE.WebGLRenderer({
-      antialias: false, // Disable for performance
+      antialias: false,
       powerPreference: 'high-performance'
     });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); // Cap pixel ratio
-    containerRef.current.appendChild(renderer.domElement);
-    rendererRef.current = renderer;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+    container.appendChild(renderer.domElement);
 
     // Create scene and camera
     const scene = new THREE.Scene();
@@ -283,12 +234,52 @@ export default function OceanCanvas({
     const mesh = new THREE.Mesh(geometry, material);
     scene.add(mesh);
 
-    // Handle resize
+    // Event handlers
     const handleResize = () => {
-      const width = window.innerWidth;
-      const height = window.innerHeight;
-      renderer.setSize(width, height);
-      uniforms.iResolution.value.set(width, height);
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      uniforms.iResolution.value.set(window.innerWidth, window.innerHeight);
+    };
+
+    const handleMouseDown = (e: MouseEvent) => {
+      hasInteracted = true;
+      mouse.isDown = true;
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+      mouseTarget.x = e.clientX;
+      mouseTarget.y = e.clientY;
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (mouse.isDown) {
+        mouseTarget.x = e.clientX;
+        mouseTarget.y = e.clientY;
+      }
+    };
+
+    const handleMouseUp = () => {
+      mouse.isDown = false;
+    };
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length > 0) {
+        hasInteracted = true;
+        mouse.isDown = true;
+        mouse.x = e.touches[0].clientX;
+        mouse.y = e.touches[0].clientY;
+        mouseTarget.x = e.touches[0].clientX;
+        mouseTarget.y = e.touches[0].clientY;
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length > 0 && mouse.isDown) {
+        mouseTarget.x = e.touches[0].clientX;
+        mouseTarget.y = e.touches[0].clientY;
+      }
+    };
+
+    const handleTouchEnd = () => {
+      mouse.isDown = false;
     };
 
     // Add event listeners
@@ -302,27 +293,22 @@ export default function OceanCanvas({
 
     // Animation loop
     const animate = () => {
-      animationFrameRef.current = requestAnimationFrame(animate);
+      animationFrameId = requestAnimationFrame(animate);
 
-      const elapsedTime = (Date.now() - startTimeRef.current) / 1000;
-      uniforms.iTime.value = elapsedTime;
+      uniforms.iTime.value = (Date.now() - startTime) / 1000;
 
-      // Only update mouse if user has interacted
-      if (hasInteractedRef.current) {
-        // Smooth mouse interpolation while dragging
-        if (mouseRef.current.isDown) {
-          mouseRef.current.x += (mouseTargetRef.current.x - mouseRef.current.x) * 0.15;
-          mouseRef.current.y += (mouseTargetRef.current.y - mouseRef.current.y) * 0.15;
+      if (hasInteracted) {
+        if (mouse.isDown) {
+          mouse.x += (mouseTarget.x - mouse.x) * 0.15;
+          mouse.y += (mouseTarget.y - mouse.y) * 0.15;
         }
-
         uniforms.iMouse.value.set(
-          mouseRef.current.x,
-          window.innerHeight - mouseRef.current.y, // Flip Y for shader
-          mouseRef.current.isDown ? 1 : 0,
+          mouse.x,
+          window.innerHeight - mouse.y,
+          mouse.isDown ? 1 : 0,
           0
         );
       }
-      // If no interaction, iMouse stays at (0,0,0,0) and shader uses default view
 
       renderer.render(scene, camera);
     };
@@ -331,7 +317,7 @@ export default function OceanCanvas({
 
     // Cleanup
     return () => {
-      cancelAnimationFrame(animationFrameRef.current);
+      cancelAnimationFrame(animationFrameId);
       window.removeEventListener('resize', handleResize);
       renderer.domElement.removeEventListener('mousedown', handleMouseDown);
       window.removeEventListener('mousemove', handleMouseMove);
@@ -342,11 +328,10 @@ export default function OceanCanvas({
       renderer.dispose();
       geometry.dispose();
       material.dispose();
-      if (containerRef.current && renderer.domElement) {
-        containerRef.current.removeChild(renderer.domElement);
+      if (container.contains(renderer.domElement)) {
+        container.removeChild(renderer.domElement);
       }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
