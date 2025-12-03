@@ -346,7 +346,8 @@ export default function OceanCanvas({
         containerRef.current.removeChild(renderer.domElement);
       }
     };
-  }, [handleMouseDown, handleMouseMove, handleMouseUp, handleTouchStart, handleTouchMove, handleTouchEnd]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div

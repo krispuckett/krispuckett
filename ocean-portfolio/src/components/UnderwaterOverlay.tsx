@@ -34,7 +34,7 @@ export default function UnderwaterOverlay({ scrollProgress }: UnderwaterOverlayP
 
   return (
     <motion.div
-      className="fixed inset-0 z-25 pointer-events-none"
+      className="fixed inset-0 z-[25] pointer-events-none"
       style={{ opacity }}
     >
       {/* Base underwater tint */}
