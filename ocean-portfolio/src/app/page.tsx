@@ -5,8 +5,6 @@ import dynamic from 'next/dynamic';
 import HeroOverlay from '@/components/HeroOverlay';
 import Navigation from '@/components/Navigation';
 import SiteContent from '@/components/SiteContent';
-import SurfaceWipe from '@/components/SurfaceWipe';
-import UnderwaterOverlay from '@/components/UnderwaterOverlay';
 
 // Dynamic import for OceanCanvas to avoid SSR issues with Three.js
 const OceanCanvas = dynamic(() => import('@/components/OceanCanvas'), {
@@ -19,29 +17,31 @@ const OceanCanvas = dynamic(() => import('@/components/OceanCanvas'), {
 export default function Home() {
   const { scrollYProgress } = useScroll();
 
-  // Layer 5: Ocean shader - fades out during dive (10-30%)
-  const shaderOpacity = useTransform(scrollYProgress, [0.1, 0.3], [1, 0]);
+  // Hero text fades out first as you start scrolling
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.08], [1, 0]);
 
-  // Layer 6: Hero text - fades out first (0-10%)
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.1], [1, 0]);
+  // Ocean shader fades and scales slightly as you "dive" into it
+  const shaderOpacity = useTransform(scrollYProgress, [0.05, 0.25], [1, 0]);
+  const shaderScale = useTransform(scrollYProgress, [0, 0.25], [1, 1.1]);
+  const shaderBlur = useTransform(scrollYProgress, [0.1, 0.25], [0, 8]);
 
-  // Content animations - slides up into view
-  const contentY = useTransform(scrollYProgress, [0.25, 0.5], ['100vh', '0vh']);
-  const contentOpacity = useTransform(scrollYProgress, [0.3, 0.45], [0, 1]);
+  // Content rises up from below
+  const contentY = useTransform(scrollYProgress, [0.15, 0.4], ['100vh', '0vh']);
+  const contentOpacity = useTransform(scrollYProgress, [0.2, 0.35], [0, 1]);
 
   return (
     <main className="relative">
-      {/* Layer 1: Deep ocean background - always visible */}
+      {/* Deep ocean background - visible as shader fades */}
       <div
         className="fixed inset-0 z-0"
         style={{
-          background: 'linear-gradient(to bottom, #0a1e3a 0%, #051525 50%, #020a10 100%)',
+          background: 'linear-gradient(to bottom, #0d1f2d 0%, #0a1520 40%, #050a0f 100%)',
         }}
       />
 
-      {/* Layer 2: Site content - starts below fold */}
+      {/* Site content - rises up from the depths */}
       <motion.div
-        className="fixed inset-0 z-10 overflow-auto"
+        className="fixed inset-0 z-10"
         style={{
           y: contentY,
           opacity: contentOpacity,
@@ -52,21 +52,19 @@ export default function Home() {
         </div>
       </motion.div>
 
-      {/* Layer 3: Underwater overlay - blue tint with caustics */}
-      <UnderwaterOverlay scrollProgress={scrollYProgress} />
-
-      {/* Layer 4: Surface wipe - blur band that moves down */}
-      <SurfaceWipe scrollProgress={scrollYProgress} />
-
-      {/* Layer 5: Ocean shader - fixed, fades out during dive */}
+      {/* Ocean shader - fades, scales, and blurs as you dive through */}
       <motion.div
-        className="fixed inset-0 z-40"
-        style={{ opacity: shaderOpacity }}
+        className="fixed inset-0 z-40 origin-center"
+        style={{
+          opacity: shaderOpacity,
+          scale: shaderScale,
+          filter: useTransform(shaderBlur, (v) => `blur(${v}px)`),
+        }}
       >
         <OceanCanvas />
       </motion.div>
 
-      {/* Layer 6: Hero text overlay - fades out first */}
+      {/* Hero text overlay */}
       <motion.div
         className="fixed inset-0 z-50 pointer-events-none"
         style={{ opacity: heroOpacity }}
@@ -74,12 +72,12 @@ export default function Home() {
         <HeroOverlay />
       </motion.div>
 
-      {/* Navigation - highest z-index */}
+      {/* Navigation */}
       <div className="relative z-[60]">
         <Navigation />
       </div>
 
-      {/* Scroll spacer - creates the dive scroll distance */}
+      {/* Scroll spacer */}
       <div className="h-[200vh]" />
     </main>
   );
