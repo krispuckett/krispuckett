@@ -9,7 +9,8 @@ void main() {
 }
 `;
 
-// Exact port of afl_ext's Seascape shader from Shadertoy
+// Custom sunset ocean shader - inspired by afl_ext's Seascape
+// Customized with warm sunset palette and golden hour lighting
 const fragmentShader = `
 precision highp float;
 
@@ -22,6 +23,13 @@ uniform vec4 iMouse;
 #define CAMERA_HEIGHT 1.5
 #define ITERATIONS_RAYMARCH 12
 #define ITERATIONS_NORMAL 36
+
+// Custom color palette - warm sunset tones
+vec3 sunsetOrange = vec3(1.0, 0.45, 0.2);
+vec3 sunsetPink = vec3(0.95, 0.4, 0.5);
+vec3 sunsetPurple = vec3(0.4, 0.2, 0.5);
+vec3 deepBlue = vec3(0.1, 0.15, 0.35);
+vec3 horizonGold = vec3(1.0, 0.7, 0.3);
 
 vec2 wavedx(vec2 position, vec2 direction, float frequency, float timeshift) {
   float x = dot(direction, position) * frequency + timeshift;
@@ -106,29 +114,52 @@ float intersectPlane(vec3 origin, vec3 direction, vec3 point, vec3 normal) {
   return clamp(dot(point - origin, normal) / dot(direction, normal), -1.0, 9991999.0);
 }
 
-vec3 extra_cheap_atmosphere(vec3 raydir, vec3 sundir) {
-  float special_trick = 1.0 / (raydir.y * 1.0 + 0.1);
-  float special_trick2 = 1.0 / (sundir.y * 11.0 + 1.0);
-  float raysundt = pow(abs(dot(sundir, raydir)), 2.0);
-  float sundt = pow(max(0.0, dot(sundir, raydir)), 8.0);
-  float mymie = sundt * special_trick * 0.2;
-  vec3 suncolor = mix(vec3(1.0), max(vec3(0.0), vec3(1.0) - vec3(5.5, 13.0, 22.4) / 22.4), special_trick2);
-  vec3 bluesky = vec3(5.5, 13.0, 22.4) / 22.4 * suncolor;
-  vec3 bluesky2 = max(vec3(0.0), bluesky - vec3(5.5, 13.0, 22.4) * 0.002 * (special_trick + -6.0 * sundir.y * sundir.y));
-  bluesky2 *= special_trick * (0.24 + raysundt * 0.24);
-  return bluesky2 * (1.0 + 1.0 * pow(1.0 - raydir.y, 3.0));
+// Custom sunset sky atmosphere
+vec3 getSunsetSky(vec3 raydir, vec3 sundir) {
+  float sunHeight = sundir.y;
+
+  // Base sky gradient - deep blue at top, warm at horizon
+  float horizonBlend = pow(1.0 - max(0.0, raydir.y), 3.0);
+  float zenithBlend = max(0.0, raydir.y);
+
+  // Sunset colors based on height in sky
+  vec3 zenithColor = mix(deepBlue, sunsetPurple, 0.3);
+  vec3 midColor = mix(sunsetPink, sunsetOrange, horizonBlend);
+  vec3 horizonColor = mix(horizonGold, sunsetOrange, 0.5);
+
+  // Blend sky colors
+  vec3 sky = mix(horizonColor, midColor, pow(zenithBlend, 0.5));
+  sky = mix(sky, zenithColor, pow(zenithBlend, 1.5));
+
+  // Sun glow
+  float sunDot = max(0.0, dot(raydir, sundir));
+  float sunGlow = pow(sunDot, 8.0) * 0.5;
+  float sunCore = pow(sunDot, 256.0) * 2.0;
+
+  // Warm sun color
+  vec3 sunColor = vec3(1.0, 0.85, 0.6);
+  sky += sunColor * sunGlow;
+  sky += sunColor * sunCore;
+
+  // Atmospheric haze near horizon
+  float haze = pow(1.0 - abs(raydir.y), 8.0);
+  sky = mix(sky, horizonGold * 0.8, haze * 0.3);
+
+  return sky;
 }
 
 vec3 getSunDirection() {
-  return normalize(vec3(-0.0773502691896258, 0.5 + sin(iTime * 0.2 + 2.6) * 0.45, 0.5773502691896258));
+  // Sun low on horizon for golden hour - slight movement over time
+  float sunAngle = 0.15 + sin(iTime * 0.05) * 0.05;
+  return normalize(vec3(0.5, sunAngle, 0.7));
 }
 
 vec3 getAtmosphere(vec3 dir) {
-  return extra_cheap_atmosphere(dir, getSunDirection()) * 0.5;
+  return getSunsetSky(dir, getSunDirection());
 }
 
 float getSun(vec3 dir) {
-  return pow(max(0.0, dot(dir, getSunDirection())), 720.0) * 210.0;
+  return pow(max(0.0, dot(dir, getSunDirection())), 720.0) * 150.0;
 }
 
 vec3 aces_tonemap(vec3 color) {
@@ -153,7 +184,7 @@ void main() {
 
   if(ray.y >= 0.0) {
     vec3 C = getAtmosphere(ray) + getSun(ray);
-    gl_FragColor = vec4(aces_tonemap(C * 2.0), 1.0);
+    gl_FragColor = vec4(aces_tonemap(C * 1.5), 1.0);
     return;
   }
 
@@ -178,10 +209,25 @@ void main() {
   R.y = abs(R.y);
 
   vec3 reflection = getAtmosphere(R) + getSun(R);
-  vec3 scattering = vec3(0.0293, 0.0698, 0.1717) * 0.1 * (0.2 + (waterHitPos.y + WATER_DEPTH) / WATER_DEPTH);
+
+  // Custom water color - deep teal with warm undertones
+  vec3 waterDeep = vec3(0.02, 0.06, 0.1);
+  vec3 waterShallow = vec3(0.03, 0.08, 0.12);
+  float depthFactor = (waterHitPos.y + WATER_DEPTH) / WATER_DEPTH;
+  vec3 scattering = mix(waterDeep, waterShallow, depthFactor) * 0.8;
+
+  // Add warm reflection from sunset
+  vec3 warmReflect = sunsetOrange * 0.02 * fresnel;
+  scattering += warmReflect;
 
   vec3 C = fresnel * reflection + scattering;
-  gl_FragColor = vec4(aces_tonemap(C * 2.0), 1.0);
+
+  // Slight fog/atmosphere at distance
+  float fogDist = smoothstep(0.0, 100.0, dist);
+  vec3 fogColor = mix(horizonGold, sunsetPink, 0.3) * 0.15;
+  C = mix(C, fogColor, fogDist * 0.3);
+
+  gl_FragColor = vec4(aces_tonemap(C * 1.5), 1.0);
 }
 `;
 
