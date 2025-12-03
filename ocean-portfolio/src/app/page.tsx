@@ -18,12 +18,25 @@ const OceanCanvas = dynamic(() => import('@/components/OceanCanvas'), {
 export default function Home() {
   const { scrollYProgress } = useScroll();
   const [isShaderActive, setIsShaderActive] = useState(true);
+  const [diveProgress, setDiveProgress] = useState(0);
 
-  // Transform values
-  const shaderOpacityTransform = useTransform(scrollYProgress, [0.2, 0.4], [1, 0]);
+  // Transform values based on dive progress
+  // Shader fades out as we dive deeper
+  const shaderOpacityTransform = useTransform(scrollYProgress, [0.4, 0.6], [1, 0]);
+  // Hero text fades out early in the dive
   const heroOpacityTransform = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
-  const contentY = useTransform(scrollYProgress, [0.15, 0.4], ['100vh', '0vh']);
-  const contentOpacity = useTransform(scrollYProgress, [0.2, 0.35], [0, 1]);
+  // Content slides up as we finish diving
+  const contentY = useTransform(scrollYProgress, [0.4, 0.7], ['100vh', '0vh']);
+  const contentOpacity = useTransform(scrollYProgress, [0.5, 0.65], [0, 1]);
+
+  // Track dive progress from scroll position
+  // diveProgress: 0 = at top, 1 = scrolled 100vh (full dive zone)
+  useMotionValueEvent(scrollYProgress, 'change', (latest) => {
+    // Map scrollYProgress to diveProgress
+    // scrollYProgress 0-0.5 maps to diveProgress 0-1
+    const progress = Math.min(1, latest / 0.5);
+    setDiveProgress(progress);
+  });
 
   // Pause shader when scrolled past for performance
   useMotionValueEvent(shaderOpacityTransform, 'change', (latest) => {
@@ -37,7 +50,7 @@ export default function Home() {
         className="fixed inset-0 z-0"
         style={{ opacity: shaderOpacityTransform }}
       >
-        <OceanCanvas isActive={isShaderActive} />
+        <OceanCanvas isActive={isShaderActive} diveProgress={diveProgress} />
       </motion.div>
 
       {/* Hero overlay text - fixed, fades out first */}
@@ -52,7 +65,7 @@ export default function Home() {
       <Navigation />
 
       {/* Scroll spacer - creates the "dive" scroll distance */}
-      <div className="h-[100vh]" />
+      <div className="h-[150vh]" />
 
       {/* Main content - scrolls up into view */}
       <motion.div

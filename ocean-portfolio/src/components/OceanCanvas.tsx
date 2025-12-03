@@ -9,17 +9,19 @@ void main() {
 }
 `;
 
-// Exact port of afl_ext's Seascape shader from Shadertoy
+// Enhanced Seascape shader with dive progress
 const fragmentShader = `
 precision highp float;
 
 uniform vec2 iResolution;
 uniform float iTime;
 uniform vec4 iMouse;
+uniform float uDiveProgress;    // 0 = above water, 1 = fully submerged
+uniform float uCameraY;         // Camera Y position
+uniform float uCameraPitch;     // Camera pitch angle
 
 #define DRAG_MULT 0.38
 #define WATER_DEPTH 1.0
-#define CAMERA_HEIGHT 1.5
 #define ITERATIONS_RAYMARCH 12
 #define ITERATIONS_NORMAL 36
 
@@ -94,12 +96,14 @@ vec3 getRay(vec2 fragCoord) {
   vec3 proj = normalize(vec3(uv.x, uv.y, 1.5));
 
   vec2 normalizedMouse = iMouse.xy / iResolution.xy;
-  // Default to looking slightly down at horizon when no mouse input
   float mouseX = normalizedMouse.x;
   float mouseY = normalizedMouse.y == 0.0 ? 0.27 : normalizedMouse.y;
 
+  // Apply dive-based pitch adjustment
+  float pitchAdjust = uCameraPitch;
+
   return createRotationMatrixAxisAngle(vec3(0.0, -1.0, 0.0), 3.0 * ((mouseX + 0.5) * 2.0 - 1.0))
-    * createRotationMatrixAxisAngle(vec3(1.0, 0.0, 0.0), 0.5 + 1.5 * ((mouseY * 1.0) * 2.0 - 1.0))
+    * createRotationMatrixAxisAngle(vec3(1.0, 0.0, 0.0), 0.5 + 1.5 * ((mouseY * 1.0) * 2.0 - 1.0) + pitchAdjust)
     * proj;
 }
 
@@ -112,7 +116,6 @@ vec3 extra_cheap_atmosphere(vec3 raydir, vec3 sundir) {
   float special_trick2 = 1.0 / (sundir.y * 11.0 + 1.0);
   float raysundt = pow(abs(dot(sundir, raydir)), 2.0);
   float sundt = pow(max(0.0, dot(sundir, raydir)), 8.0);
-  float mymie = sundt * special_trick * 0.2;
   vec3 suncolor = mix(vec3(1.0), max(vec3(0.0), vec3(1.0) - vec3(5.5, 13.0, 22.4) / 22.4), special_trick2);
   vec3 bluesky = vec3(5.5, 13.0, 22.4) / 22.4 * suncolor;
   vec3 bluesky2 = max(vec3(0.0), bluesky - vec3(5.5, 13.0, 22.4) * 0.002 * (special_trick + -6.0 * sundir.y * sundir.y));
@@ -121,7 +124,7 @@ vec3 extra_cheap_atmosphere(vec3 raydir, vec3 sundir) {
 }
 
 vec3 getSunDirection() {
-  return normalize(vec3(-0.0773502691896258, 0.5 + sin(iTime * 0.2 + 2.6) * 0.45, 0.5773502691896258));
+  return normalize(vec3(-0.0773502691896258, 0.5 + sin(iTime * 0.1 + 2.6) * 0.3, 0.5773502691896258));
 }
 
 vec3 getAtmosphere(vec3 dir) {
@@ -149,18 +152,54 @@ vec3 aces_tonemap(vec3 color) {
   return pow(clamp(m2 * (a / b), 0.0, 1.0), vec3(1.0 / 2.2));
 }
 
-void main() {
-  vec3 ray = getRay(gl_FragCoord.xy);
+// Underwater color grading
+vec3 underwaterColor(vec3 color, float depth) {
+  // Blue-green tint that increases with depth
+  vec3 waterTint = vec3(0.1, 0.4, 0.6);
+  float tintStrength = smoothstep(0.0, 1.0, depth) * 0.7;
+  color = mix(color, color * waterTint, tintStrength);
 
-  if(ray.y >= 0.0) {
+  // Darken with depth
+  float darkness = 1.0 - smoothstep(0.0, 1.0, depth) * 0.6;
+  color *= darkness;
+
+  return color;
+}
+
+// Surface distortion effect
+vec2 surfaceDistortion(vec2 uv, float progress) {
+  // Distortion peaks at surface crossing (progress ~0.2)
+  float distortionStrength = sin(progress * 3.14159) * 0.03;
+  float wave = sin(uv.x * 20.0 + iTime * 2.0) * sin(uv.y * 15.0 + iTime * 1.5);
+  return uv + vec2(wave) * distortionStrength;
+}
+
+void main() {
+  vec2 fragCoord = gl_FragCoord.xy;
+
+  // Apply surface distortion near the surface transition
+  if (uDiveProgress > 0.1 && uDiveProgress < 0.4) {
+    vec2 uv = fragCoord / iResolution.xy;
+    uv = surfaceDistortion(uv, uDiveProgress);
+    fragCoord = uv * iResolution.xy;
+  }
+
+  vec3 ray = getRay(fragCoord);
+
+  // Camera height based on dive progress
+  float cameraHeight = uCameraY;
+
+  // Above water - normal rendering
+  if (ray.y >= 0.0 && uDiveProgress < 0.25) {
     vec3 C = getAtmosphere(ray) + getSun(ray);
     gl_FragColor = vec4(aces_tonemap(C * 2.0), 1.0);
     return;
   }
 
+  // Water plane setup
   vec3 waterPlaneHigh = vec3(0.0, 0.0, 0.0);
   vec3 waterPlaneLow = vec3(0.0, -WATER_DEPTH, 0.0);
-  vec3 origin = vec3(iTime * 0.2, CAMERA_HEIGHT, 1.0);
+  vec3 origin = vec3(iTime * 0.2, cameraHeight, 1.0);
 
   float highPlaneHit = intersectPlane(origin, ray, waterPlaneHigh, vec3(0.0, 1.0, 0.0));
   float lowPlaneHit = intersectPlane(origin, ray, waterPlaneLow, vec3(0.0, 1.0, 0.0));
@@ -182,6 +221,26 @@ void main() {
   vec3 scattering = vec3(0.0293, 0.0698, 0.1717) * 0.1 * (0.2 + (waterHitPos.y + WATER_DEPTH) / WATER_DEPTH);
 
   vec3 C = fresnel * reflection + scattering;
+
+  // Apply underwater color grading based on dive progress
+  if (uDiveProgress > 0.2) {
+    float underwaterDepth = smoothstep(0.2, 0.6, uDiveProgress);
+    C = underwaterColor(C, underwaterDepth);
+
+    // Add caustics effect when looking up from underwater
+    if (ray.y > 0.0) {
+      float caustic = pow(max(0.0, dot(ray, getSunDirection())), 4.0) * 0.5;
+      C += vec3(caustic * 0.3, caustic * 0.4, caustic * 0.5) * (1.0 - underwaterDepth * 0.5);
+    }
+  }
+
+  // Surface flash at the crossing point
+  if (uDiveProgress > 0.15 && uDiveProgress < 0.25) {
+    float flashIntensity = 1.0 - abs(uDiveProgress - 0.2) * 20.0;
+    flashIntensity = max(0.0, flashIntensity) * 0.3;
+    C += vec3(flashIntensity);
+  }
+
   gl_FragColor = vec4(aces_tonemap(C * 2.0), 1.0);
 }
 `;
@@ -189,21 +248,33 @@ void main() {
 interface OceanCanvasProps {
   isActive?: boolean;
   className?: string;
+  diveProgress?: number;
 }
 
 export default function OceanCanvas({
   isActive = true,
   className = '',
+  diveProgress = 0,
 }: OceanCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
-  const materialRef = useRef<THREE.ShaderMaterial | null>(null);
+  const uniformsRef = useRef<{
+    iResolution: { value: THREE.Vector2 };
+    iTime: { value: number };
+    iMouse: { value: THREE.Vector4 };
+    uDiveProgress: { value: number };
+    uCameraY: { value: number };
+    uCameraPitch: { value: number };
+  } | null>(null);
   const animationFrameRef = useRef<number>(0);
   const startTimeRef = useRef<number>(Date.now());
-  // Use ref for isActive so animation loop doesn't need to be recreated
+
+  // Use refs for values that change frequently
   const isActiveRef = useRef(isActive);
   isActiveRef.current = isActive;
-  // Track if user has interacted - shader uses (0,0) as "no interaction" signal
+  const diveProgressRef = useRef(diveProgress);
+  diveProgressRef.current = diveProgress;
+
   const hasInteractedRef = useRef(false);
   const mouseRef = useRef({ x: 0, y: 0, isDown: false });
   const mouseTargetRef = useRef({ x: 0, y: 0 });
@@ -252,44 +323,76 @@ export default function OceanCanvas({
     mouseRef.current.isDown = false;
   }, []);
 
+  // Calculate camera position based on dive progress
+  const getCameraY = (progress: number): number => {
+    // Smooth easing function
+    const ease = (t: number) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+    if (progress < 0.2) {
+      // Above water: 1.5 -> 0
+      return 1.5 - ease(progress / 0.2) * 1.5;
+    } else if (progress < 0.4) {
+      // At and below surface: 0 -> -2
+      return -ease((progress - 0.2) / 0.2) * 2;
+    } else {
+      // Fully submerged
+      return -2;
+    }
+  };
+
+  // Calculate camera pitch based on dive progress
+  const getCameraPitch = (progress: number): number => {
+    if (progress < 0.15) {
+      // Looking at horizon, then tilting down
+      return -progress / 0.15 * 0.3; // Tilt down 0.3 radians (~17°)
+    } else if (progress < 0.25) {
+      // At surface, leveling out
+      const t = (progress - 0.15) / 0.1;
+      return -0.3 + t * 0.3; // Back to level
+    } else if (progress < 0.4) {
+      // Below surface, looking up
+      const t = (progress - 0.25) / 0.15;
+      return t * 0.5; // Tilt up 0.5 radians (~29°)
+    } else {
+      return 0.5;
+    }
+  };
+
   useEffect(() => {
     if (!containerRef.current) return;
 
-    // Create renderer
     const renderer = new THREE.WebGLRenderer({
-      antialias: false, // Disable for performance
+      antialias: false,
       powerPreference: 'high-performance'
     });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); // Cap pixel ratio
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     containerRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
-    // Create scene and camera
     const scene = new THREE.Scene();
     const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
-    // Create uniforms
     const uniforms = {
       iResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
       iTime: { value: 0.0 },
       iMouse: { value: new THREE.Vector4(0, 0, 0, 0) },
+      uDiveProgress: { value: 0.0 },
+      uCameraY: { value: 1.5 },
+      uCameraPitch: { value: 0.0 },
     };
+    uniformsRef.current = uniforms;
 
-    // Create shader material
     const material = new THREE.ShaderMaterial({
       vertexShader,
       fragmentShader,
       uniforms,
     });
-    materialRef.current = material;
 
-    // Create fullscreen quad
     const geometry = new THREE.PlaneGeometry(2, 2);
     const mesh = new THREE.Mesh(geometry, material);
     scene.add(mesh);
 
-    // Handle resize
     const handleResize = () => {
       const width = window.innerWidth;
       const height = window.innerHeight;
@@ -297,7 +400,6 @@ export default function OceanCanvas({
       uniforms.iResolution.value.set(width, height);
     };
 
-    // Add event listeners
     window.addEventListener('resize', handleResize);
     renderer.domElement.addEventListener('mousedown', handleMouseDown);
     window.addEventListener('mousemove', handleMouseMove);
@@ -306,19 +408,22 @@ export default function OceanCanvas({
     window.addEventListener('touchmove', handleTouchMove, { passive: true });
     window.addEventListener('touchend', handleTouchEnd);
 
-    // Animation loop
     const animate = () => {
       animationFrameRef.current = requestAnimationFrame(animate);
 
-      // Use ref to check isActive so we don't recreate the effect
       if (!isActiveRef.current) return;
 
       const elapsedTime = (Date.now() - startTimeRef.current) / 1000;
       uniforms.iTime.value = elapsedTime;
 
-      // Only update mouse if user has interacted
-      if (hasInteractedRef.current) {
-        // Smooth mouse interpolation while dragging
+      // Update dive progress uniforms
+      const progress = diveProgressRef.current;
+      uniforms.uDiveProgress.value = progress;
+      uniforms.uCameraY.value = getCameraY(progress);
+      uniforms.uCameraPitch.value = getCameraPitch(progress);
+
+      // Mouse interaction (disabled when underwater)
+      if (hasInteractedRef.current && progress < 0.3) {
         if (mouseRef.current.isDown) {
           mouseRef.current.x += (mouseTargetRef.current.x - mouseRef.current.x) * 0.15;
           mouseRef.current.y += (mouseTargetRef.current.y - mouseRef.current.y) * 0.15;
@@ -326,19 +431,17 @@ export default function OceanCanvas({
 
         uniforms.iMouse.value.set(
           mouseRef.current.x,
-          window.innerHeight - mouseRef.current.y, // Flip Y for shader
+          window.innerHeight - mouseRef.current.y,
           mouseRef.current.isDown ? 1 : 0,
           0
         );
       }
-      // If no interaction, iMouse stays at (0,0,0,0) and shader uses default view
 
       renderer.render(scene, camera);
     };
 
     animate();
 
-    // Cleanup
     return () => {
       cancelAnimationFrame(animationFrameRef.current);
       window.removeEventListener('resize', handleResize);
@@ -361,7 +464,7 @@ export default function OceanCanvas({
     <div
       ref={containerRef}
       className={`absolute inset-0 ${className}`}
-      style={{ cursor: 'grab', touchAction: 'none' }}
+      style={{ cursor: diveProgress < 0.3 ? 'grab' : 'default', touchAction: 'none' }}
     />
   );
 }
