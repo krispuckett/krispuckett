@@ -187,27 +187,16 @@ void main() {
 `;
 
 interface OceanCanvasProps {
-  isActive?: boolean;
   className?: string;
 }
 
 export default function OceanCanvas({
-  isActive = true,
   className = '',
 }: OceanCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
-  const uniformsRef = useRef<{
-    iResolution: { value: THREE.Vector2 };
-    iTime: { value: number };
-    iMouse: { value: THREE.Vector4 };
-  } | null>(null);
   const animationFrameRef = useRef<number>(0);
   const startTimeRef = useRef<number>(Date.now());
-
-  // Use ref for isActive so animation loop doesn't need to be recreated
-  const isActiveRef = useRef(isActive);
-  isActiveRef.current = isActive;
 
   // Track if user has interacted - shader uses (0,0) as "no interaction" signal
   const hasInteractedRef = useRef(false);
@@ -281,7 +270,6 @@ export default function OceanCanvas({
       iTime: { value: 0.0 },
       iMouse: { value: new THREE.Vector4(0, 0, 0, 0) },
     };
-    uniformsRef.current = uniforms;
 
     // Create shader material
     const material = new THREE.ShaderMaterial({
@@ -315,9 +303,6 @@ export default function OceanCanvas({
     // Animation loop
     const animate = () => {
       animationFrameRef.current = requestAnimationFrame(animate);
-
-      // Use ref to check isActive so we don't recreate the effect
-      if (!isActiveRef.current) return;
 
       const elapsedTime = (Date.now() - startTimeRef.current) / 1000;
       uniforms.iTime.value = elapsedTime;

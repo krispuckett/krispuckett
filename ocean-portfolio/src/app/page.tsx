@@ -1,7 +1,6 @@
 'use client';
 
-import { useScroll, useTransform, motion, useMotionValueEvent } from 'framer-motion';
-import { useState } from 'react';
+import { useScroll, useTransform, motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import HeroOverlay from '@/components/HeroOverlay';
 import Navigation from '@/components/Navigation';
@@ -19,7 +18,6 @@ const OceanCanvas = dynamic(() => import('@/components/OceanCanvas'), {
 
 export default function Home() {
   const { scrollYProgress } = useScroll();
-  const [isShaderActive, setIsShaderActive] = useState(true);
 
   // Layer 5: Ocean shader - fades out during dive (10-30%)
   const shaderOpacity = useTransform(scrollYProgress, [0.1, 0.3], [1, 0]);
@@ -30,11 +28,6 @@ export default function Home() {
   // Content animations - slides up into view
   const contentY = useTransform(scrollYProgress, [0.25, 0.5], ['100vh', '0vh']);
   const contentOpacity = useTransform(scrollYProgress, [0.3, 0.45], [0, 1]);
-
-  // Pause shader when not visible for performance
-  useMotionValueEvent(shaderOpacity, 'change', (latest) => {
-    setIsShaderActive(latest > 0.01);
-  });
 
   return (
     <main className="relative">
@@ -70,7 +63,7 @@ export default function Home() {
         className="fixed inset-0 z-40"
         style={{ opacity: shaderOpacity }}
       >
-        <OceanCanvas isActive={isShaderActive} />
+        <OceanCanvas />
       </motion.div>
 
       {/* Layer 6: Hero text overlay - fades out first */}
