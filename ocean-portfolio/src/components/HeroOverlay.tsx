@@ -2,6 +2,19 @@
 
 import { motion } from 'framer-motion';
 
+// Bird icon SVG component
+function BirdIcon({ className = '' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      className={className}
+    >
+      <path d="M21.97 10.57L18 6.6V4c0-.55-.45-1-1-1h-2c-.55 0-1 .45-1 1v.6L12.41 3c-.38-.38-1.05-.38-1.42 0l-9.01 9c-.38.37-.38 1.04 0 1.41.19.19.44.29.71.29s.51-.1.71-.29L12 4.83l8.59 8.58c.39.39 1.02.39 1.41 0 .38-.37.38-1.04-.03-1.41zM12 8l-6 6v5c0 .55.45 1 1 1h3v-4h4v4h3c.55 0 1-.45 1-1v-5l-6-6z" />
+    </svg>
+  );
+}
+
 interface HeroOverlayProps {
   opacity?: number;
 }
@@ -15,67 +28,54 @@ export default function HeroOverlay({ opacity = 1 }: HeroOverlayProps) {
       animate={{ opacity }}
       transition={{ duration: 0.5 }}
     >
-      <div className="max-w-4xl text-center">
+      <div className="w-full max-w-3xl">
         <motion.h1
-          className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 drop-shadow-lg"
+          className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight tracking-tight"
+          style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.2, duration: 0.8 }}
         >
-          World&apos;s most optimistic design leader.*
-        </motion.h1>
-
-        <motion.p
-          className="text-lg md:text-xl lg:text-2xl text-white/90 drop-shadow-md"
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.4, duration: 0.8 }}
-        >
-          I grow thriving design teams through craft and coaching.
-        </motion.p>
-
-        <motion.div
-          className="mt-12 text-white/60 text-sm"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1, duration: 0.8 }}
-        >
-          <span className="inline-flex items-center gap-2">
-            <motion.span
-              animate={{ y: [0, 5, 0] }}
-              transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
-            >
-              Scroll to dive
-            </motion.span>
-            <motion.svg
-              width="16"
-              height="16"
-              viewBox="0 0 16 16"
-              fill="none"
-              className="mt-0.5"
-              animate={{ y: [0, 3, 0] }}
-              transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
-            >
-              <path
-                d="M8 3v10M4 9l4 4 4-4"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </motion.svg>
+          World&apos;s most optimistic
+          <br />
+          design leader.*
+          <br />
+          <span className="text-white/90">
+            I grow thriving design
+            <br />
+            teams through craft
+            <br />
+            and coaching.
           </span>
-        </motion.div>
+        </motion.h1>
       </div>
 
-      <motion.p
-        className="absolute bottom-8 left-8 text-white/40 text-xs max-w-xs"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.5, duration: 0.8 }}
+      {/* Bird icon at bottom center */}
+      <motion.div
+        className="absolute bottom-12 left-1/2 -translate-x-1/2"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1, duration: 0.8 }}
       >
-        * Results may vary. Optimism not clinically tested.
-      </motion.p>
+        <motion.div
+          animate={{ y: [0, 5, 0] }}
+          transition={{ repeat: Infinity, duration: 2.5, ease: 'easeInOut' }}
+        >
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="white"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="opacity-60"
+          >
+            <path d="M12 5v14M5 12l7 7 7-7" />
+          </svg>
+        </motion.div>
+      </motion.div>
     </motion.div>
   );
 }
