@@ -40,7 +40,7 @@ export default function Home() {
 
       {/* Ocean shader - fades, scales, and blurs as you dive through */}
       <motion.div
-        className="fixed inset-0 z-10 origin-center pointer-events-none"
+        className="fixed inset-0 z-10 origin-center"
         style={{
           opacity: shaderOpacity,
           scale: shaderScale,
