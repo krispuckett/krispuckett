@@ -29,8 +29,7 @@ export default function HeroOverlay({ opacity = 1 }: HeroOverlayProps) {
       {/* Main content — positioned bottom-left */}
       <div className="absolute bottom-24 left-0 px-8 md:px-16">
         <motion.h1
-          className="font-bold text-white leading-[1.0] tracking-[-0.03em] max-w-[900px] will-change-transform"
-          style={{ fontSize: 'clamp(3.5rem, 10vw, 8rem)' }}
+          className="font-bold text-white leading-[1.0] tracking-[-0.03em] max-w-[900px] will-change-transform text-[80px]"
           initial={{ y: 24, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{
@@ -47,8 +46,7 @@ export default function HeroOverlay({ opacity = 1 }: HeroOverlayProps) {
         </motion.h1>
 
         <motion.h2
-          className="mt-6 font-bold text-white/85 leading-[1.0] tracking-[-0.03em] max-w-[900px] will-change-transform"
-          style={{ fontSize: 'clamp(3.5rem, 10vw, 8rem)' }}
+          className="mt-6 font-bold text-white/85 leading-[1.0] tracking-[-0.03em] max-w-[900px] will-change-transform text-[80px]"
           initial={{ y: 16, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{
