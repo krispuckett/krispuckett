@@ -28,7 +28,7 @@ export default function HeroOverlay({ opacity = 1 }: HeroOverlayProps) {
 
       {/* Main content — positioned bottom-left */}
       <div className="absolute bottom-24 left-0 px-8 md:px-16">
-        <motion.h1
+        <motion.div
           className="font-bold text-white leading-[1.0] tracking-[-0.03em] max-w-[900px] will-change-transform text-[80px]"
           initial={{ y: 24, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -43,9 +43,9 @@ export default function HeroOverlay({ opacity = 1 }: HeroOverlayProps) {
           World&apos;s most optimistic
           <br />
           design leader.*
-        </motion.h1>
+        </motion.div>
 
-        <motion.h2
+        <motion.div
           className="mt-6 font-bold text-white/85 leading-[1.0] tracking-[-0.03em] max-w-[900px] will-change-transform text-[80px]"
           initial={{ y: 16, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -58,7 +58,7 @@ export default function HeroOverlay({ opacity = 1 }: HeroOverlayProps) {
           }}
         >
           I grow thriving design teams through craft and coaching.
-        </motion.h2>
+        </motion.div>
       </div>
 
       {/* Scroll indicator — centered at bottom */}
