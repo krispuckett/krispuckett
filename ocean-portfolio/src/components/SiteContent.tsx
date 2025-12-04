@@ -2,9 +2,21 @@
 
 import { motion } from 'framer-motion';
 
+// Spring config for entering elements
+const springEnter = {
+  type: 'spring' as const,
+  stiffness: 100,
+  damping: 20,
+  mass: 1,
+};
+
 const fadeIn = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0 },
+  hidden: { opacity: 0, y: 16 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: springEnter,
+  },
 };
 
 const staggerContainer = {
@@ -12,8 +24,8 @@ const staggerContainer = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.15,
-      delayChildren: 0.1,
+      staggerChildren: 0.1,
+      delayChildren: 0.05,
     },
   },
 };
@@ -68,7 +80,7 @@ export default function SiteContent() {
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
             <span
               className="text-fluid-lg font-serif italic text-white/80 text-glow"
@@ -86,9 +98,8 @@ export default function SiteContent() {
           >
             {/* Main story */}
             <motion.p
-              className="font-serif text-fluid-lg text-white/75 leading-[1.7]"
+              className="font-serif text-fluid-lg text-white/75 leading-[1.7] will-change-transform"
               variants={fadeIn}
-              transition={{ duration: 0.6 }}
             >
               There once was a lonely wannabe designer. He sat in a late night coffee shop,
               nursing a decaf americano with Sketch open. He moved some shapes on a screen and
@@ -99,9 +110,8 @@ export default function SiteContent() {
 
             {/* Work history with bold company names */}
             <motion.p
-              className="font-serif text-fluid-lg text-white/75 leading-[1.7]"
+              className="font-serif text-fluid-lg text-white/75 leading-[1.7] will-change-transform"
               variants={fadeIn}
-              transition={{ duration: 0.6 }}
             >
               Currently, I support design teams at <strong className="text-white font-semibold">Shopify</strong>.
               I&apos;ve led design teams for <strong className="text-white font-semibold">Mercury</strong>,
@@ -112,9 +122,8 @@ export default function SiteContent() {
 
             {/* Acknowledgments intro */}
             <motion.p
-              className="font-serif text-fluid-lg text-white/75 leading-[1.7]"
+              className="font-serif text-fluid-lg text-white/75 leading-[1.7] will-change-transform"
               variants={fadeIn}
-              transition={{ duration: 0.6 }}
             >
               Here&apos;s an ongoing list of people I deeply owe: for encouragement, for advice,
               for opening doors, for inviting me to go on this wild journey.
@@ -122,9 +131,8 @@ export default function SiteContent() {
 
             {/* Two-column names list */}
             <motion.div
-              className="grid grid-cols-2 gap-x-12 md:gap-x-20 gap-y-2 pt-10"
+              className="grid grid-cols-2 gap-x-12 md:gap-x-20 gap-y-2 pt-10 will-change-transform"
               variants={fadeIn}
-              transition={{ duration: 0.6 }}
             >
               <div className="space-y-2">
                 {namesLeft.map((name, index) => (
@@ -134,7 +142,11 @@ export default function SiteContent() {
                     initial={{ opacity: 0 }}
                     whileInView={{ opacity: 1 }}
                     viewport={{ once: true }}
-                    transition={{ delay: index * 0.03, duration: 0.4 }}
+                    transition={{
+                      delay: index * 0.02,
+                      duration: 0.25,
+                      ease: [0.25, 0.46, 0.45, 0.94], // ease-out-quad
+                    }}
                   >
                     {name}
                   </motion.p>
@@ -148,7 +160,11 @@ export default function SiteContent() {
                     initial={{ opacity: 0 }}
                     whileInView={{ opacity: 1 }}
                     viewport={{ once: true }}
-                    transition={{ delay: index * 0.03 + 0.1, duration: 0.4 }}
+                    transition={{
+                      delay: index * 0.02 + 0.05,
+                      duration: 0.25,
+                      ease: [0.25, 0.46, 0.45, 0.94], // ease-out-quad
+                    }}
                   >
                     {name}
                   </motion.p>
@@ -163,11 +179,11 @@ export default function SiteContent() {
       <section id="words" className="min-h-screen px-6 md:px-12 py-24 md:py-32 border-t border-white/5">
         <div className="max-w-[680px] mx-auto">
           <motion.h2
-            className="text-fluid-2xl font-medium text-white/90 mb-16 tracking-tight"
-            initial={{ opacity: 0, y: 20 }}
+            className="text-fluid-2xl font-medium text-white/90 mb-16 tracking-tight will-change-transform"
+            initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
+            transition={springEnter}
           >
             Words
           </motion.h2>
@@ -195,14 +211,17 @@ export default function SiteContent() {
             ].map((post, index) => (
               <motion.article
                 key={post.title}
-                className="group cursor-pointer"
-                initial={{ opacity: 0, y: 25 }}
+                className="group cursor-pointer will-change-transform"
+                initial={{ opacity: 0, y: 16 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
+                transition={{
+                  ...springEnter,
+                  delay: index * 0.08,
+                }}
               >
                 <div className="flex items-start justify-between gap-6 mb-3">
-                  <h3 className="font-serif text-fluid-lg text-white/70 group-hover:text-white transition-colors duration-300">
+                  <h3 className="font-serif text-fluid-lg text-white/70 group-hover:text-white transition-colors duration-200 ease-out">
                     {post.title}
                   </h3>
                   <span className="text-fluid-sm text-white/30 flex-shrink-0 pt-1">{post.date}</span>
@@ -219,11 +238,11 @@ export default function SiteContent() {
       {/* Contact Section */}
       <section id="contact" className="min-h-[50vh] flex items-center justify-center px-6 md:px-12 py-24 md:py-32 border-t border-white/5">
         <motion.div
-          className="text-center max-w-xl"
-          initial={{ opacity: 0, y: 30 }}
+          className="text-center max-w-xl will-change-transform"
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
+          transition={springEnter}
         >
           <h2 className="font-serif text-fluid-3xl text-white/80 mb-8">
             Let&apos;s chat
@@ -235,7 +254,7 @@ export default function SiteContent() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <a
               href="mailto:hello@krispuckett.com"
-              className="px-8 py-4 bg-white/10 text-white/90 text-fluid-sm font-medium rounded-full hover:bg-white/15 transition-all duration-300 hover:scale-[1.02]"
+              className="px-8 py-4 bg-white/10 text-white/90 text-fluid-sm font-medium rounded-full hover:bg-white/15 transition-colors duration-200 ease-out"
             >
               Send an Email
             </a>
@@ -243,7 +262,7 @@ export default function SiteContent() {
               href="https://twitter.com/krispuckett"
               target="_blank"
               rel="noopener noreferrer"
-              className="px-8 py-4 border border-white/10 text-white/60 text-fluid-sm font-medium rounded-full hover:bg-white/5 hover:text-white/80 transition-all duration-300"
+              className="px-8 py-4 border border-white/10 text-white/60 text-fluid-sm font-medium rounded-full hover:bg-white/5 hover:text-white/80 transition-colors duration-200 ease-out"
             >
               Follow on X
             </a>
