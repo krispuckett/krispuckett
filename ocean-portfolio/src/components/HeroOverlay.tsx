@@ -46,7 +46,7 @@ export default function HeroOverlay({ opacity = 1 }: HeroOverlayProps) {
           design leader.*
         </motion.h1>
 
-        <motion.p
+        <motion.h2
           className="mt-6 font-bold text-white/85 leading-[1.0] tracking-[-0.03em] max-w-[900px] will-change-transform"
           style={{ fontSize: 'clamp(3.5rem, 10vw, 8rem)' }}
           initial={{ y: 16, opacity: 0 }}
@@ -60,7 +60,7 @@ export default function HeroOverlay({ opacity = 1 }: HeroOverlayProps) {
           }}
         >
           I grow thriving design teams through craft and coaching.
-        </motion.p>
+        </motion.h2>
       </div>
 
       {/* Scroll indicator — centered at bottom */}
