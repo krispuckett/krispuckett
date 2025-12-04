@@ -1,0 +1,71 @@
+Handle,Title,Body (HTML),Vendor,Type,Tags,Published,Option1 Name,Option1 Value,Option2 Name,Option2 Value,Variant SKU,Variant Grams,Variant Inventory Qty,Variant Inventory Policy,Variant Price,Variant Compare At Price,Variant Requires Shipping,Image Src,Image Position,Status
+alpine-summit-jacket,Alpine Summit Jacket,"<p>Our flagship 3-layer waterproof jacket built for summit pushes and backcountry exploration. Features fully taped seams, underarm vents, and a helmet-compatible hood.</p>",Summit Trail Co,Jackets,"outdoor, waterproof, hiking, alpine, bestseller",true,Color,Midnight Blue,Size,S,ALP-JKT-001-MB-S,650,12,deny,289.00,349.00,true,https://images.unsplash.com/photo-1551028719-00167b16eac5?w=800,1,active
+alpine-summit-jacket,Alpine Summit Jacket,,,,,,Color,Midnight Blue,Size,M,ALP-JKT-001-MB-M,680,24,deny,289.00,349.00,true,,,active
+alpine-summit-jacket,Alpine Summit Jacket,,,,,,Color,Midnight Blue,Size,L,ALP-JKT-001-MB-L,710,18,deny,289.00,349.00,true,,,active
+alpine-summit-jacket,Alpine Summit Jacket,,,,,,Color,Midnight Blue,Size,XL,ALP-JKT-001-MB-XL,740,8,deny,289.00,349.00,true,,,active
+alpine-summit-jacket,Alpine Summit Jacket,,,,,,Color,Forest Green,Size,S,ALP-JKT-001-FG-S,650,15,deny,289.00,349.00,true,https://images.unsplash.com/photo-1544923246-77307dd628b5?w=800,2,active
+alpine-summit-jacket,Alpine Summit Jacket,,,,,,Color,Forest Green,Size,M,ALP-JKT-001-FG-M,680,22,deny,289.00,349.00,true,,,active
+alpine-summit-jacket,Alpine Summit Jacket,,,,,,Color,Forest Green,Size,L,ALP-JKT-001-FG-L,710,19,deny,289.00,349.00,true,,,active
+alpine-summit-jacket,Alpine Summit Jacket,,,,,,Color,Forest Green,Size,XL,ALP-JKT-001-FG-XL,740,6,deny,289.00,349.00,true,,,active
+trailblazer-hiking-pants,Trailblazer Hiking Pants,"<p>Durable, stretchy hiking pants designed for long days on the trail. Quick-dry fabric with UPF 50+ sun protection and zip-off legs.</p>",Summit Trail Co,Pants,"outdoor, hiking, convertible, UPF",true,Color,Stone Grey,Size,30,TRL-PNT-042-SG-30,380,14,deny,129.00,159.00,true,https://images.unsplash.com/photo-1473966968600-fa801b869a1a?w=800,1,active
+trailblazer-hiking-pants,Trailblazer Hiking Pants,,,,,,Color,Stone Grey,Size,32,TRL-PNT-042-SG-32,400,18,deny,129.00,159.00,true,,,active
+trailblazer-hiking-pants,Trailblazer Hiking Pants,,,,,,Color,Stone Grey,Size,34,TRL-PNT-042-SG-34,420,21,deny,129.00,159.00,true,,,active
+trailblazer-hiking-pants,Trailblazer Hiking Pants,,,,,,Color,Stone Grey,Size,36,TRL-PNT-042-SG-36,440,9,deny,129.00,159.00,true,,,active
+trailblazer-hiking-pants,Trailblazer Hiking Pants,,,,,,Color,Khaki,Size,30,TRL-PNT-042-KH-30,380,11,deny,129.00,159.00,true,https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=800,2,active
+trailblazer-hiking-pants,Trailblazer Hiking Pants,,,,,,Color,Khaki,Size,32,TRL-PNT-042-KH-32,400,16,deny,129.00,159.00,true,,,active
+trailblazer-hiking-pants,Trailblazer Hiking Pants,,,,,,Color,Khaki,Size,34,TRL-PNT-042-KH-34,420,13,deny,129.00,159.00,true,,,active
+trailblazer-hiking-pants,Trailblazer Hiking Pants,,,,,,Color,Khaki,Size,36,TRL-PNT-042-KH-36,440,7,deny,129.00,159.00,true,,,active
+backcountry-45l-pack,Backcountry 45L Pack,"<p>A versatile multi-day pack with excellent load distribution and ventilated back panel. Perfect for weekend backpacking trips.</p>",Summit Trail Co,Backpacks,"outdoor, backpacking, camping, hiking",true,Color,Forest Green,Size,One Size,BCK-PCK-015-FG,1400,12,deny,199.00,249.00,true,https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=800,1,active
+backcountry-45l-pack,Backcountry 45L Pack,,,,,,Color,Slate Blue,Size,One Size,BCK-PCK-015-SB,1400,8,deny,199.00,249.00,true,https://images.unsplash.com/photo-1622260614153-03223fb72052?w=800,2,active
+summit-base-layer-tee,Summit Base Layer Tee,"<p>Lightweight merino wool blend base layer for year-round comfort. Naturally odor-resistant and temperature regulating.</p>",Summit Trail Co,Base Layers,"outdoor, merino, base layer, hiking",true,Color,Heather Oat,Size,S,SUM-TEE-088-HO-S,180,28,deny,59.00,79.00,true,https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800,1,active
+summit-base-layer-tee,Summit Base Layer Tee,,,,,,Color,Heather Oat,Size,M,SUM-TEE-088-HO-M,195,45,deny,59.00,79.00,true,,,active
+summit-base-layer-tee,Summit Base Layer Tee,,,,,,Color,Heather Oat,Size,L,SUM-TEE-088-HO-L,210,38,deny,59.00,79.00,true,,,active
+summit-base-layer-tee,Summit Base Layer Tee,,,,,,Color,Heather Oat,Size,XL,SUM-TEE-088-HO-XL,225,22,deny,59.00,79.00,true,,,active
+summit-base-layer-tee,Summit Base Layer Tee,,,,,,Color,Charcoal,Size,S,SUM-TEE-088-CH-S,180,31,deny,59.00,79.00,true,https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=800,2,active
+summit-base-layer-tee,Summit Base Layer Tee,,,,,,Color,Charcoal,Size,M,SUM-TEE-088-CH-M,195,42,deny,59.00,79.00,true,,,active
+summit-base-layer-tee,Summit Base Layer Tee,,,,,,Color,Charcoal,Size,L,SUM-TEE-088-CH-L,210,35,deny,59.00,79.00,true,,,active
+summit-base-layer-tee,Summit Base Layer Tee,,,,,,Color,Charcoal,Size,XL,SUM-TEE-088-CH-XL,225,19,deny,59.00,79.00,true,,,active
+ridgeline-fleece-pullover,Ridgeline Fleece Pullover,"<p>Cozy mid-layer fleece with a classic half-zip design. Perfect for chilly mornings at camp or layering under a shell.</p>",Summit Trail Co,Fleece,"outdoor, fleece, mid-layer, recycled",true,Color,Burnt Orange,Size,S,RDG-FLC-023-BO-S,340,16,deny,149.00,179.00,true,https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=800,1,active
+ridgeline-fleece-pullover,Ridgeline Fleece Pullover,,,,,,Color,Burnt Orange,Size,M,RDG-FLC-023-BO-M,360,24,deny,149.00,179.00,true,,,active
+ridgeline-fleece-pullover,Ridgeline Fleece Pullover,,,,,,Color,Burnt Orange,Size,L,RDG-FLC-023-BO-L,380,19,deny,149.00,179.00,true,,,active
+ridgeline-fleece-pullover,Ridgeline Fleece Pullover,,,,,,Color,Burnt Orange,Size,XL,RDG-FLC-023-BO-XL,400,31,deny,149.00,179.00,true,,,active
+ridgeline-fleece-pullover,Ridgeline Fleece Pullover,,,,,,Color,Navy,Size,S,RDG-FLC-023-NV-S,340,21,deny,149.00,179.00,true,https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=800,2,active
+ridgeline-fleece-pullover,Ridgeline Fleece Pullover,,,,,,Color,Navy,Size,M,RDG-FLC-023-NV-M,360,27,deny,149.00,179.00,true,,,active
+ridgeline-fleece-pullover,Ridgeline Fleece Pullover,,,,,,Color,Navy,Size,L,RDG-FLC-023-NV-L,380,18,deny,149.00,179.00,true,,,active
+ridgeline-fleece-pullover,Ridgeline Fleece Pullover,,,,,,Color,Navy,Size,XL,RDG-FLC-023-NV-XL,400,14,deny,149.00,179.00,true,,,active
+trekker-waterproof-boots,Trekker Waterproof Boots,"<p>Rugged waterproof hiking boots with superior ankle support and Vibram outsoles. Built for rough terrain and long miles.</p>",Summit Trail Co,Footwear,"outdoor, boots, waterproof, hiking, Gore-Tex",true,Color,Brown Leather,Size,8,TRK-BT-007-BL-8,850,6,deny,249.00,299.00,true,https://images.unsplash.com/photo-1542840410-8e897b6d4c4e?w=800,1,active
+trekker-waterproof-boots,Trekker Waterproof Boots,,,,,,Color,Brown Leather,Size,9,TRK-BT-007-BL-9,870,11,deny,249.00,299.00,true,,,active
+trekker-waterproof-boots,Trekker Waterproof Boots,,,,,,Color,Brown Leather,Size,10,TRK-BT-007-BL-10,890,8,deny,249.00,299.00,true,,,active
+trekker-waterproof-boots,Trekker Waterproof Boots,,,,,,Color,Brown Leather,Size,11,TRK-BT-007-BL-11,910,5,deny,249.00,299.00,true,,,active
+trekker-waterproof-boots,Trekker Waterproof Boots,,,,,,Color,Brown Leather,Size,12,TRK-BT-007-BL-12,930,4,deny,249.00,299.00,true,,,active
+insulated-grip-gloves,Insulated Grip Gloves,"<p>Touchscreen-compatible insulated gloves with silicone grip palms. Warm enough for cold days, dexterous enough for real work.</p>",Summit Trail Co,Accessories,"outdoor, gloves, insulated, touchscreen",true,Color,Black,Size,S,GLV-INS-011-BK-S,85,34,deny,45.00,59.00,true,https://images.unsplash.com/photo-1545170241-e489bfc14f66?w=800,1,active
+insulated-grip-gloves,Insulated Grip Gloves,,,,,,Color,Black,Size,M,GLV-INS-011-BK-M,90,52,deny,45.00,59.00,true,,,active
+insulated-grip-gloves,Insulated Grip Gloves,,,,,,Color,Black,Size,L,GLV-INS-011-BK-L,95,41,deny,45.00,59.00,true,,,active
+insulated-grip-gloves,Insulated Grip Gloves,,,,,,Color,Black,Size,XL,GLV-INS-011-BK-XL,100,28,deny,45.00,59.00,true,,,active
+sunshield-trail-cap,Sunshield Trail Cap,"<p>Lightweight running cap with extended sun protection and moisture-wicking sweatband. Reflective details for low-light visibility.</p>",Summit Trail Co,Accessories,"outdoor, cap, UPF, running",true,Color,Sand,Size,One Size,CAP-SUN-033-SD,65,67,deny,35.00,45.00,true,https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=800,1,active
+sunshield-trail-cap,Sunshield Trail Cap,,,,,,Color,Black,Size,One Size,CAP-SUN-033-BK,65,54,deny,35.00,45.00,true,https://images.unsplash.com/photo-1534215754734-18e55d13e346?w=800,2,active
+sunshield-trail-cap,Sunshield Trail Cap,,,,,,Color,Olive,Size,One Size,CAP-SUN-033-OL,65,43,deny,35.00,45.00,true,https://images.unsplash.com/photo-1556306535-0f09a537f0a3?w=800,3,active
+alpine-down-vest,Alpine Down Vest,"<p>Lightweight packable down vest for core warmth without bulk. Perfect as a mid-layer or standalone piece.</p>",Summit Trail Co,Vests,"outdoor, down, packable, insulated",true,Color,Black,Size,S,ALP-VST-056-BK-S,280,18,deny,179.00,219.00,true,https://images.unsplash.com/photo-1611312449408-fcece27cdbb7?w=800,1,active
+alpine-down-vest,Alpine Down Vest,,,,,,Color,Black,Size,M,ALP-VST-056-BK-M,300,26,deny,179.00,219.00,true,,,active
+alpine-down-vest,Alpine Down Vest,,,,,,Color,Black,Size,L,ALP-VST-056-BK-L,320,21,deny,179.00,219.00,true,,,active
+alpine-down-vest,Alpine Down Vest,,,,,,Color,Black,Size,XL,ALP-VST-056-BK-XL,340,12,deny,179.00,219.00,true,,,active
+alpine-down-vest,Alpine Down Vest,,,,,,Color,Rust,Size,S,ALP-VST-056-RS-S,280,14,deny,179.00,219.00,true,https://images.unsplash.com/photo-1608063615781-e2ef8c73d114?w=800,2,active
+alpine-down-vest,Alpine Down Vest,,,,,,Color,Rust,Size,M,ALP-VST-056-RS-M,300,19,deny,179.00,219.00,true,,,active
+alpine-down-vest,Alpine Down Vest,,,,,,Color,Rust,Size,L,ALP-VST-056-RS-L,320,15,deny,179.00,219.00,true,,,active
+alpine-down-vest,Alpine Down Vest,,,,,,Color,Rust,Size,XL,ALP-VST-056-RS-XL,340,8,deny,179.00,219.00,true,,,active
+trail-runner-shorts,Trail Runner Shorts,"<p>Lightweight trail running shorts with built-in liner and multiple storage pockets. Designed for speed on technical terrain.</p>",Summit Trail Co,Shorts,"outdoor, running, trail, lightweight",true,Color,Black,Size,S,TRL-SRT-089-BK-S,120,32,deny,69.00,89.00,true,https://images.unsplash.com/photo-1591195853828-11db59a44f6b?w=800,1,active
+trail-runner-shorts,Trail Runner Shorts,,,,,,Color,Black,Size,M,TRL-SRT-089-BK-M,130,45,deny,69.00,89.00,true,,,active
+trail-runner-shorts,Trail Runner Shorts,,,,,,Color,Black,Size,L,TRL-SRT-089-BK-L,140,38,deny,69.00,89.00,true,,,active
+trail-runner-shorts,Trail Runner Shorts,,,,,,Color,Black,Size,XL,TRL-SRT-089-BK-XL,150,24,deny,69.00,89.00,true,,,active
+trail-runner-shorts,Trail Runner Shorts,,,,,,Color,Navy,Size,S,TRL-SRT-089-NV-S,120,28,deny,69.00,89.00,true,https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=800,2,active
+trail-runner-shorts,Trail Runner Shorts,,,,,,Color,Navy,Size,M,TRL-SRT-089-NV-M,130,36,deny,69.00,89.00,true,,,active
+trail-runner-shorts,Trail Runner Shorts,,,,,,Color,Navy,Size,L,TRL-SRT-089-NV-L,140,31,deny,69.00,89.00,true,,,active
+trail-runner-shorts,Trail Runner Shorts,,,,,,Color,Navy,Size,XL,TRL-SRT-089-NV-XL,150,19,deny,69.00,89.00,true,,,active
+expedition-softshell,Expedition Softshell,"<p>Wind-resistant softshell jacket with 4-way stretch for active pursuits. Ideal for high-output activities in variable conditions.</p>",Summit Trail Co,Jackets,"outdoor, softshell, wind-resistant, active",true,Color,Graphite,Size,S,EXP-SSH-034-GR-S,520,14,deny,189.00,229.00,true,https://images.unsplash.com/photo-1544923246-77307dd628b5?w=800,1,active
+expedition-softshell,Expedition Softshell,,,,,,Color,Graphite,Size,M,EXP-SSH-034-GR-M,550,22,deny,189.00,229.00,true,,,active
+expedition-softshell,Expedition Softshell,,,,,,Color,Graphite,Size,L,EXP-SSH-034-GR-L,580,18,deny,189.00,229.00,true,,,active
+expedition-softshell,Expedition Softshell,,,,,,Color,Graphite,Size,XL,EXP-SSH-034-GR-XL,610,11,deny,189.00,229.00,true,,,active
+expedition-softshell,Expedition Softshell,,,,,,Color,Teal,Size,S,EXP-SSH-034-TL-S,520,16,deny,189.00,229.00,true,https://images.unsplash.com/photo-1495121605193-b116b5b9c5fe?w=800,2,active
+expedition-softshell,Expedition Softshell,,,,,,Color,Teal,Size,M,EXP-SSH-034-TL-M,550,24,deny,189.00,229.00,true,,,active
+expedition-softshell,Expedition Softshell,,,,,,Color,Teal,Size,L,EXP-SSH-034-TL-L,580,19,deny,189.00,229.00,true,,,active
+expedition-softshell,Expedition Softshell,,,,,,Color,Teal,Size,XL,EXP-SSH-034-TL-XL,610,9,deny,189.00,229.00,true,,,active
