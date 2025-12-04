@@ -7,13 +7,14 @@ import { motion, AnimatePresence } from 'framer-motion'
 // Types
 // ============================================================================
 
-type WorkflowStep = 'action' | 'location' | 'items' | 'confirm'
+type WorkflowStep = 'action' | 'items' | 'quantity' | 'location' | 'confirm'
 
 interface Tag {
   type: 'action' | 'location' | 'item'
   label: string
   value: string
   icon?: string
+  quantity?: number
 }
 
 interface Action {
@@ -38,6 +39,11 @@ interface Product {
   image: string
   stock: number
   price: number
+}
+
+interface ItemQuantity {
+  productId: string
+  quantity: number
 }
 
 // ============================================================================
@@ -77,19 +83,26 @@ const PRODUCTS: Product[] = [
 interface CommandKProps {
   isOpen: boolean
   onClose: () => void
+  onTransferComplete?: (transfer: {
+    action: string
+    location: string
+    items: { productId: string; name: string; quantity: number }[]
+  }) => void
 }
 
-export default function CommandK({ isOpen, onClose }: CommandKProps) {
+export default function CommandK({ isOpen, onClose, onTransferComplete }: CommandKProps) {
   const [step, setStep] = useState<WorkflowStep>('action')
   const [inputValue, setInputValue] = useState('')
   const [tags, setTags] = useState<Tag[]>([])
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set())
+  const [itemQuantities, setItemQuantities] = useState<Map<string, number>>(new Map())
   const [isConfirming, setIsConfirming] = useState(false)
   const [isComplete, setIsComplete] = useState(false)
 
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
+  const quantityInputRefs = useRef<Map<string, HTMLInputElement>>(new Map())
 
   // Reset state when modal opens/closes
   useEffect(() => {
@@ -99,6 +112,7 @@ export default function CommandK({ isOpen, onClose }: CommandKProps) {
       setTags([])
       setSelectedIndex(0)
       setSelectedItems(new Set())
+      setItemQuantities(new Map())
       setIsConfirming(false)
       setIsComplete(false)
       setTimeout(() => inputRef.current?.focus(), 100)
@@ -115,16 +129,16 @@ export default function CommandK({ isOpen, onClose }: CommandKProps) {
           a.label.toLowerCase().includes(query) ||
           a.description.toLowerCase().includes(query)
         )
-      case 'location':
-        return LOCATIONS.filter(l =>
-          l.name.toLowerCase().includes(query) ||
-          l.address.toLowerCase().includes(query)
-        )
       case 'items':
         return PRODUCTS.filter(p =>
           p.name.toLowerCase().includes(query) ||
           p.sku.toLowerCase().includes(query) ||
           p.variant.toLowerCase().includes(query)
+        )
+      case 'location':
+        return LOCATIONS.filter(l =>
+          l.name.toLowerCase().includes(query) ||
+          l.address.toLowerCase().includes(query)
         )
       default:
         return []
@@ -152,6 +166,14 @@ export default function CommandK({ isOpen, onClose }: CommandKProps) {
 
   // Handle keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (step === 'quantity') {
+      if (e.key === 'Tab' || e.key === 'Enter') {
+        e.preventDefault()
+        handleProceedToLocation()
+      }
+      return
+    }
+
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault()
@@ -174,7 +196,7 @@ export default function CommandK({ isOpen, onClose }: CommandKProps) {
       case 'Tab':
         if (step === 'items' && selectedItems.size > 0) {
           e.preventDefault()
-          handleProceedToConfirm()
+          handleProceedToQuantity()
         }
         break
     }
@@ -193,13 +215,6 @@ export default function CommandK({ isOpen, onClose }: CommandKProps) {
       case 'action':
         const action = selected as Action
         setTags([...tags, { type: 'action', label: action.label, value: action.id, icon: action.icon }])
-        setStep('location')
-        setInputValue('')
-        setSelectedIndex(0)
-        break
-      case 'location':
-        const location = selected as Location
-        setTags([...tags, { type: 'location', label: location.name, value: location.id }])
         setStep('items')
         setInputValue('')
         setSelectedIndex(0)
@@ -207,23 +222,65 @@ export default function CommandK({ isOpen, onClose }: CommandKProps) {
       case 'items':
         const product = selected as Product
         const newSelected = new Set(selectedItems)
+        const newQuantities = new Map(itemQuantities)
         if (newSelected.has(product.id)) {
           newSelected.delete(product.id)
+          newQuantities.delete(product.id)
         } else {
           newSelected.add(product.id)
+          newQuantities.set(product.id, 1) // Default quantity of 1
         }
         setSelectedItems(newSelected)
+        setItemQuantities(newQuantities)
+        break
+      case 'location':
+        const location = selected as Location
+        setTags([...tags, { type: 'location', label: location.name, value: location.id }])
+        setStep('confirm')
+        setInputValue('')
+        setSelectedIndex(0)
         break
     }
   }
 
-  const handleProceedToConfirm = () => {
+  const handleProceedToQuantity = () => {
+    // Add item tags with initial quantities
     const itemTags: Tag[] = PRODUCTS
       .filter(p => selectedItems.has(p.id))
-      .map(p => ({ type: 'item' as const, label: p.name, value: p.id }))
+      .map(p => ({
+        type: 'item' as const,
+        label: p.name,
+        value: p.id,
+        quantity: itemQuantities.get(p.id) || 1
+      }))
     setTags([...tags, ...itemTags])
-    setStep('confirm')
+    setStep('quantity')
     setInputValue('')
+  }
+
+  const handleProceedToLocation = () => {
+    // Update tags with final quantities
+    const updatedTags = tags.map(tag => {
+      if (tag.type === 'item') {
+        return { ...tag, quantity: itemQuantities.get(tag.value) || 1 }
+      }
+      return tag
+    })
+    setTags(updatedTags)
+    setStep('location')
+    setInputValue('')
+    setSelectedIndex(0)
+    setTimeout(() => inputRef.current?.focus(), 100)
+  }
+
+  const handleQuantityChange = (productId: string, quantity: number) => {
+    const product = PRODUCTS.find(p => p.id === productId)
+    if (!product) return
+
+    const validQuantity = Math.max(1, Math.min(quantity, product.stock))
+    const newQuantities = new Map(itemQuantities)
+    newQuantities.set(productId, validQuantity)
+    setItemQuantities(newQuantities)
   }
 
   const handleConfirm = () => {
@@ -231,6 +288,24 @@ export default function CommandK({ isOpen, onClose }: CommandKProps) {
     setTimeout(() => {
       setIsConfirming(false)
       setIsComplete(true)
+
+      // Call the callback with transfer data
+      if (onTransferComplete) {
+        const actionTag = tags.find(t => t.type === 'action')
+        const locationTag = tags.find(t => t.type === 'location')
+        const itemTags = tags.filter(t => t.type === 'item')
+
+        onTransferComplete({
+          action: actionTag?.label || 'Transfer',
+          location: locationTag?.label || 'Unknown',
+          items: itemTags.map(t => ({
+            productId: t.value,
+            name: t.label,
+            quantity: itemQuantities.get(t.value) || 1
+          }))
+        })
+      }
+
       setTimeout(() => {
         onClose()
       }, 1500)
@@ -242,15 +317,17 @@ export default function CommandK({ isOpen, onClose }: CommandKProps) {
     const removed = newTags.pop()
     setTags(newTags)
 
-    if (removed?.type === 'item') {
-      // If we removed an item tag, check if there are more item tags
+    if (removed?.type === 'location') {
+      setStep('location')
+    } else if (removed?.type === 'item') {
       const hasMoreItems = newTags.some(t => t.type === 'item')
       if (!hasMoreItems) {
         setStep('items')
         setSelectedItems(new Set())
+        setItemQuantities(new Map())
+      } else {
+        setStep('quantity')
       }
-    } else if (removed?.type === 'location') {
-      setStep('location')
     } else if (removed?.type === 'action') {
       setStep('action')
     }
@@ -259,8 +336,9 @@ export default function CommandK({ isOpen, onClose }: CommandKProps) {
   const getPlaceholder = () => {
     switch (step) {
       case 'action': return 'What would you like to do?'
-      case 'location': return 'Select destination location...'
       case 'items': return 'Search products to transfer...'
+      case 'quantity': return 'Set quantities, then press Tab to continue'
+      case 'location': return 'Select destination location...'
       case 'confirm': return 'Press Enter to confirm transfer'
     }
   }
@@ -268,8 +346,9 @@ export default function CommandK({ isOpen, onClose }: CommandKProps) {
   const getStepLabel = () => {
     switch (step) {
       case 'action': return 'Actions'
-      case 'location': return 'Locations'
       case 'items': return `Products ${selectedItems.size > 0 ? `(${selectedItems.size} selected)` : ''}`
+      case 'quantity': return 'Set Quantities'
+      case 'location': return 'Destination'
       case 'confirm': return 'Confirm Transfer'
     }
   }
@@ -280,6 +359,12 @@ export default function CommandK({ isOpen, onClose }: CommandKProps) {
       case 'store': return '🏪'
       case 'distribution': return '📍'
     }
+  }
+
+  const getTotalItems = () => {
+    let total = 0
+    itemQuantities.forEach(qty => total += qty)
+    return total
   }
 
   if (!isOpen) return null
@@ -321,13 +406,22 @@ export default function CommandK({ isOpen, onClose }: CommandKProps) {
                 transition={{ type: 'spring', duration: 0.5, bounce: 0.4 }}
                 className="flex flex-col items-center gap-3"
               >
-                <div className="w-16 h-16 rounded-full bg-[#008060] flex items-center justify-center">
-                  <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#008060] to-[#004c3f] flex items-center justify-center shadow-lg">
+                  <motion.svg
+                    initial={{ pathLength: 0 }}
+                    animate={{ pathLength: 1 }}
+                    transition={{ duration: 0.4, delay: 0.2 }}
+                    className="w-8 h-8 text-white"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={3}
+                  >
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
+                  </motion.svg>
                 </div>
                 <p className="text-[#1a1a1a] font-semibold text-lg">Transfer initiated</p>
-                <p className="text-[#6d7175] text-sm">{selectedItems.size} items moving to destination</p>
+                <p className="text-[#6d7175] text-sm">{getTotalItems()} items moving to {tags.find(t => t.type === 'location')?.label}</p>
               </motion.div>
             </motion.div>
           )}
@@ -357,22 +451,27 @@ export default function CommandK({ isOpen, onClose }: CommandKProps) {
                 >
                   {tag.icon && <span className="text-xs">{tag.icon}</span>}
                   {tag.label}
+                  {tag.type === 'item' && tag.quantity && (
+                    <span className="ml-1 px-1.5 py-0.5 bg-white/50 rounded text-xs">×{tag.quantity}</span>
+                  )}
                 </motion.span>
               ))}
 
               {/* Input */}
-              <input
-                ref={inputRef}
-                type="text"
-                value={inputValue}
-                onChange={(e) => {
-                  setInputValue(e.target.value)
-                  setSelectedIndex(0)
-                }}
-                onKeyDown={handleKeyDown}
-                placeholder={tags.length === 0 ? getPlaceholder() : getPlaceholder()}
-                className="flex-1 min-w-[120px] bg-transparent outline-none text-[#1a1a1a] text-base placeholder:text-[#8c9196]"
-              />
+              {step !== 'quantity' && step !== 'confirm' && (
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={inputValue}
+                  onChange={(e) => {
+                    setInputValue(e.target.value)
+                    setSelectedIndex(0)
+                  }}
+                  onKeyDown={handleKeyDown}
+                  placeholder={getPlaceholder()}
+                  className="flex-1 min-w-[120px] bg-transparent outline-none text-[#1a1a1a] text-base placeholder:text-[#8c9196]"
+                />
+              )}
             </div>
 
             {/* Keyboard shortcut hint */}
@@ -382,7 +481,7 @@ export default function CommandK({ isOpen, onClose }: CommandKProps) {
           </div>
 
           {/* Results Area */}
-          {step !== 'confirm' && (
+          {(step === 'action' || step === 'items' || step === 'location') && (
             <div className="max-h-[400px] overflow-y-auto">
               {/* Section Header */}
               <div className="px-4 py-2 text-xs font-semibold text-[#6d7175] uppercase tracking-wider bg-[#fafbfb] border-b border-[#e1e3e5]">
@@ -412,34 +511,6 @@ export default function CommandK({ isOpen, onClose }: CommandKProps) {
                     <div className="flex-1 min-w-0">
                       <p className="text-[#1a1a1a] font-medium">{action.label}</p>
                       <p className="text-[#6d7175] text-sm">{action.description}</p>
-                    </div>
-                    {selectedIndex === i && (
-                      <kbd className="px-1.5 py-0.5 text-xs font-mono text-[#6d7175] bg-white rounded border border-[#e1e3e5]">↵</kbd>
-                    )}
-                  </motion.div>
-                ))}
-
-                {step === 'location' && (results as Location[]).map((location, i) => (
-                  <motion.div
-                    key={location.id}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.03 }}
-                    onClick={() => {
-                      setSelectedIndex(i)
-                      handleSelect()
-                    }}
-                    className={`
-                      flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors
-                      ${selectedIndex === i ? 'bg-[#f1f2f4]' : 'hover:bg-[#fafbfb]'}
-                    `}
-                  >
-                    <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-[#f1f2f4] flex items-center justify-center text-xl">
-                      {getLocationIcon(location.type)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[#1a1a1a] font-medium">{location.name}</p>
-                      <p className="text-[#6d7175] text-sm truncate">{location.address}</p>
                     </div>
                     {selectedIndex === i && (
                       <kbd className="px-1.5 py-0.5 text-xs font-mono text-[#6d7175] bg-white rounded border border-[#e1e3e5]">↵</kbd>
@@ -500,6 +571,34 @@ export default function CommandK({ isOpen, onClose }: CommandKProps) {
                   )
                 })}
 
+                {step === 'location' && (results as Location[]).map((location, i) => (
+                  <motion.div
+                    key={location.id}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.03 }}
+                    onClick={() => {
+                      setSelectedIndex(i)
+                      handleSelect()
+                    }}
+                    className={`
+                      flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors
+                      ${selectedIndex === i ? 'bg-[#f1f2f4]' : 'hover:bg-[#fafbfb]'}
+                    `}
+                  >
+                    <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-[#f1f2f4] flex items-center justify-center text-xl">
+                      {getLocationIcon(location.type)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[#1a1a1a] font-medium">{location.name}</p>
+                      <p className="text-[#6d7175] text-sm truncate">{location.address}</p>
+                    </div>
+                    {selectedIndex === i && (
+                      <kbd className="px-1.5 py-0.5 text-xs font-mono text-[#6d7175] bg-white rounded border border-[#e1e3e5]">↵</kbd>
+                    )}
+                  </motion.div>
+                ))}
+
                 {results.length === 0 && (
                   <div className="px-4 py-8 text-center text-[#6d7175]">
                     <p>No results found for &ldquo;{inputValue}&rdquo;</p>
@@ -509,59 +608,152 @@ export default function CommandK({ isOpen, onClose }: CommandKProps) {
             </div>
           )}
 
+          {/* Quantity Step */}
+          {step === 'quantity' && (
+            <div className="max-h-[400px] overflow-y-auto">
+              <div className="px-4 py-2 text-xs font-semibold text-[#6d7175] uppercase tracking-wider bg-[#fafbfb] border-b border-[#e1e3e5]">
+                {getStepLabel()}
+              </div>
+              <div className="py-2">
+                {PRODUCTS.filter(p => selectedItems.has(p.id)).map((product, i) => (
+                  <motion.div
+                    key={product.id}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.03 }}
+                    className="flex items-center gap-3 px-4 py-3"
+                  >
+                    {/* Product Image */}
+                    <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-[#f1f2f4] flex items-center justify-center text-xl">
+                      {product.image}
+                    </div>
+
+                    {/* Product Info */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[#1a1a1a] font-medium">{product.name}</p>
+                      <p className="text-[#6d7175] text-sm">{product.variant}</p>
+                    </div>
+
+                    {/* Quantity Input */}
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleQuantityChange(product.id, (itemQuantities.get(product.id) || 1) - 1)}
+                        className="w-8 h-8 rounded-lg bg-[#f1f2f4] hover:bg-[#e1e3e5] flex items-center justify-center text-[#6d7175] font-medium transition-colors"
+                      >
+                        −
+                      </button>
+                      <input
+                        ref={el => { if (el) quantityInputRefs.current.set(product.id, el) }}
+                        type="number"
+                        min="1"
+                        max={product.stock}
+                        value={itemQuantities.get(product.id) || 1}
+                        onChange={(e) => handleQuantityChange(product.id, parseInt(e.target.value) || 1)}
+                        onKeyDown={handleKeyDown}
+                        className="w-16 h-8 text-center border border-[#e1e3e5] rounded-lg text-[#1a1a1a] font-medium focus:outline-none focus:ring-2 focus:ring-[#008060] focus:border-transparent"
+                      />
+                      <button
+                        onClick={() => handleQuantityChange(product.id, (itemQuantities.get(product.id) || 1) + 1)}
+                        className="w-8 h-8 rounded-lg bg-[#f1f2f4] hover:bg-[#e1e3e5] flex items-center justify-center text-[#6d7175] font-medium transition-colors"
+                      >
+                        +
+                      </button>
+                    </div>
+
+                    {/* Stock indicator */}
+                    <div className="flex-shrink-0 text-right w-16">
+                      <p className="text-[#8c9196] text-xs">of {product.stock}</p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Confirm Step */}
           {step === 'confirm' && (
-            <div className="p-4">
-              <div className="bg-[#fafbfb] rounded-lg p-4 mb-4">
-                <h3 className="text-[#1a1a1a] font-semibold mb-3">Transfer Summary</h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[#6d7175]">Action:</span>
-                    <span className="text-[#1a1a1a] font-medium">{tags.find(t => t.type === 'action')?.label}</span>
+            <div className="p-6">
+              <div className="bg-gradient-to-br from-[#fafbfb] to-[#f4f5f7] rounded-xl p-5 mb-5 border border-[#e1e3e5]">
+                <h3 className="text-[#1a1a1a] font-semibold mb-4 text-lg">Transfer Summary</h3>
+                <div className="space-y-3 text-sm">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-[#e3f1df] flex items-center justify-center">
+                      <span className="text-sm">{tags.find(t => t.type === 'action')?.icon}</span>
+                    </div>
+                    <div>
+                      <p className="text-[#6d7175] text-xs uppercase tracking-wide">Action</p>
+                      <p className="text-[#1a1a1a] font-medium">{tags.find(t => t.type === 'action')?.label}</p>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[#6d7175]">Destination:</span>
-                    <span className="text-[#1a1a1a] font-medium">{tags.find(t => t.type === 'location')?.label}</span>
+
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-[#e0f0ff] flex items-center justify-center">
+                      <span className="text-sm">📍</span>
+                    </div>
+                    <div>
+                      <p className="text-[#6d7175] text-xs uppercase tracking-wide">Destination</p>
+                      <p className="text-[#1a1a1a] font-medium">{tags.find(t => t.type === 'location')?.label}</p>
+                    </div>
                   </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-[#6d7175]">Items:</span>
-                    <div className="flex-1">
-                      {tags.filter(t => t.type === 'item').map((tag, i) => (
-                        <span key={i} className="inline-block mr-2 mb-1 px-2 py-0.5 bg-[#fff5e6] text-[#8a6116] rounded text-xs font-medium">
-                          {tag.label}
-                        </span>
-                      ))}
+
+                  <div className="pt-3 border-t border-[#e1e3e5]">
+                    <p className="text-[#6d7175] text-xs uppercase tracking-wide mb-2">Items ({getTotalItems()} total)</p>
+                    <div className="space-y-2">
+                      {tags.filter(t => t.type === 'item').map((tag, i) => {
+                        const product = PRODUCTS.find(p => p.id === tag.value)
+                        const quantity = itemQuantities.get(tag.value) || 1
+                        return (
+                          <div key={i} className="flex items-center justify-between py-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-base">{product?.image}</span>
+                              <span className="text-[#1a1a1a] font-medium">{tag.label}</span>
+                            </div>
+                            <span className="px-2 py-1 bg-[#fff5e6] text-[#8a6116] rounded text-sm font-medium">
+                              ×{quantity}
+                            </span>
+                          </div>
+                        )
+                      })}
                     </div>
                   </div>
                 </div>
               </div>
 
               <motion.button
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
+                whileHover={{ scale: 1.02, boxShadow: '0 8px 30px rgba(0, 128, 96, 0.3)' }}
+                whileTap={{ scale: 0.98 }}
                 onClick={handleConfirm}
                 disabled={isConfirming}
                 className={`
-                  w-full py-3 rounded-lg font-semibold text-white transition-colors
-                  ${isConfirming ? 'bg-[#6d7175]' : 'bg-[#008060] hover:bg-[#006e52]'}
+                  w-full py-4 rounded-xl font-semibold text-white transition-all relative overflow-hidden
+                  ${isConfirming
+                    ? 'bg-[#6d7175]'
+                    : 'bg-gradient-to-r from-[#008060] to-[#00a47c] hover:from-[#006e52] hover:to-[#008f6b] shadow-lg'
+                  }
                 `}
               >
                 {isConfirming ? (
                   <span className="flex items-center justify-center gap-2">
-                    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                    <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                     </svg>
-                    Processing...
+                    Processing transfer...
                   </span>
                 ) : (
-                  'Confirm Transfer'
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Confirm Transfer
+                    <kbd className="ml-2 px-2 py-0.5 text-xs font-mono bg-white/20 rounded">↵</kbd>
+                  </span>
                 )}
               </motion.button>
             </div>
           )}
 
-          {/* Footer */}
+          {/* Footer for Items step */}
           {step === 'items' && selectedItems.size > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
@@ -572,10 +764,30 @@ export default function CommandK({ isOpen, onClose }: CommandKProps) {
                 <span className="font-semibold text-[#1a1a1a]">{selectedItems.size}</span> items selected
               </p>
               <button
-                onClick={handleProceedToConfirm}
+                onClick={handleProceedToQuantity}
                 className="px-4 py-1.5 bg-[#008060] text-white text-sm font-medium rounded-lg hover:bg-[#006e52] transition-colors flex items-center gap-2"
               >
-                Continue
+                Set quantities
+                <kbd className="px-1 py-0.5 text-xs font-mono bg-white/20 rounded">Tab</kbd>
+              </button>
+            </motion.div>
+          )}
+
+          {/* Footer for Quantity step */}
+          {step === 'quantity' && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="px-4 py-3 bg-[#fafbfb] border-t border-[#e1e3e5] flex items-center justify-between"
+            >
+              <p className="text-sm text-[#6d7175]">
+                <span className="font-semibold text-[#1a1a1a]">{getTotalItems()}</span> total items
+              </p>
+              <button
+                onClick={handleProceedToLocation}
+                className="px-4 py-1.5 bg-[#008060] text-white text-sm font-medium rounded-lg hover:bg-[#006e52] transition-colors flex items-center gap-2"
+              >
+                Choose destination
                 <kbd className="px-1 py-0.5 text-xs font-mono bg-white/20 rounded">Tab</kbd>
               </button>
             </motion.div>
