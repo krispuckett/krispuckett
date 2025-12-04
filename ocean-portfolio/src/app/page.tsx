@@ -38,13 +38,17 @@ export default function Home() {
         </motion.div>
       </section>
 
-      {/* Progressive blur zone between sections - high z-index to blur both */}
+      {/* Soft gradient blend between sections */}
       <div className="relative h-0 z-40">
-        <div className="absolute left-0 right-0 bottom-0 h-[100px] -translate-y-1/2 pointer-events-none">
-          {/* Strongest blur in the middle */}
-          <div className="absolute inset-0 backdrop-blur-[12px]" style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 40%, black 60%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 40%, black 60%, transparent 100%)' }} />
-          <div className="absolute inset-0 backdrop-blur-[8px]" style={{ maskImage: 'linear-gradient(to bottom, transparent 10%, black 35%, black 65%, transparent 90%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 10%, black 35%, black 65%, transparent 90%)' }} />
-          <div className="absolute inset-0 backdrop-blur-[4px]" style={{ maskImage: 'linear-gradient(to bottom, transparent 20%, black 30%, black 70%, transparent 80%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 20%, black 30%, black 70%, transparent 80%)' }} />
+        <div className="absolute left-0 right-0 h-[60px] -translate-y-1/2 pointer-events-none">
+          {/* Subtle blur that feathers from center outward */}
+          <div
+            className="absolute inset-0 backdrop-blur-[6px]"
+            style={{
+              maskImage: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.5) 45%, rgba(0,0,0,0.5) 55%, transparent 100%)',
+              WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.5) 45%, rgba(0,0,0,0.5) 55%, transparent 100%)'
+            }}
+          />
         </div>
       </div>
 
