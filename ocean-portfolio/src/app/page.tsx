@@ -36,15 +36,17 @@ export default function Home() {
         <motion.div style={{ opacity: heroOpacity }}>
           <HeroOverlay />
         </motion.div>
-
-        {/* 60px progressive blur gradient at bottom */}
-        <div className="absolute bottom-0 left-0 right-0 h-[60px] pointer-events-none z-10">
-          <div className="absolute inset-0 backdrop-blur-[1px]" style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 100%)' }} />
-          <div className="absolute inset-0 backdrop-blur-[2px]" style={{ maskImage: 'linear-gradient(to bottom, transparent 25%, black 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 25%, black 100%)' }} />
-          <div className="absolute inset-0 backdrop-blur-[4px]" style={{ maskImage: 'linear-gradient(to bottom, transparent 50%, black 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 50%, black 100%)' }} />
-          <div className="absolute inset-0 backdrop-blur-[8px]" style={{ maskImage: 'linear-gradient(to bottom, transparent 75%, black 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 75%, black 100%)' }} />
-        </div>
       </section>
+
+      {/* Progressive blur zone between sections - high z-index to blur both */}
+      <div className="relative h-0 z-40">
+        <div className="absolute left-0 right-0 bottom-0 h-[100px] -translate-y-1/2 pointer-events-none">
+          {/* Strongest blur in the middle */}
+          <div className="absolute inset-0 backdrop-blur-[12px]" style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 40%, black 60%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 40%, black 60%, transparent 100%)' }} />
+          <div className="absolute inset-0 backdrop-blur-[8px]" style={{ maskImage: 'linear-gradient(to bottom, transparent 10%, black 35%, black 65%, transparent 90%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 10%, black 35%, black 65%, transparent 90%)' }} />
+          <div className="absolute inset-0 backdrop-blur-[4px]" style={{ maskImage: 'linear-gradient(to bottom, transparent 20%, black 30%, black 70%, transparent 80%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 20%, black 30%, black 70%, transparent 80%)' }} />
+        </div>
+      </div>
 
       {/* Navigation - fades in after scrolling */}
       <motion.div
