@@ -7,7 +7,13 @@ interface HeroOverlayProps {
 }
 
 export default function HeroOverlay({ opacity = 1 }: HeroOverlayProps) {
-  const heroSize = '80px';
+  const heroStyle = {
+    fontSize: 'clamp(3rem, 8vw, 6rem)',
+    fontWeight: 700,
+    lineHeight: 1,
+    letterSpacing: '-0.03em',
+    maxWidth: 900,
+  };
 
   return (
     <motion.div
@@ -28,22 +34,10 @@ export default function HeroOverlay({ opacity = 1 }: HeroOverlayProps) {
         }}
       />
 
-      {/* DEBUG - remove me */}
-      <div className="fixed top-4 left-4 bg-red-500 text-white p-4 z-[9999]">
-        DEBUG: heroSize = {heroSize}
-      </div>
-
       {/* Hero text */}
       <div className="absolute bottom-24 left-0 px-8 md:px-16">
-        <motion.div
-          style={{
-            fontSize: heroSize,
-            fontWeight: 700,
-            color: 'white',
-            lineHeight: 1,
-            letterSpacing: '-0.03em',
-            maxWidth: 900,
-          }}
+        <motion.h1
+          style={{ ...heroStyle, color: 'white' }}
           initial={{ y: 24, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.2, type: 'spring', stiffness: 100, damping: 20 }}
@@ -51,24 +45,16 @@ export default function HeroOverlay({ opacity = 1 }: HeroOverlayProps) {
           World's most optimistic
           <br />
           design leader.*
-        </motion.div>
+        </motion.h1>
 
-        <motion.div
-          style={{
-            fontSize: heroSize,
-            fontWeight: 700,
-            color: 'rgba(255,255,255,0.85)',
-            lineHeight: 1,
-            letterSpacing: '-0.03em',
-            maxWidth: 900,
-            marginTop: 24,
-          }}
+        <motion.p
+          style={{ ...heroStyle, color: 'rgba(255,255,255,0.85)', marginTop: 24 }}
           initial={{ y: 16, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.35, type: 'spring', stiffness: 100, damping: 20 }}
         >
           I grow thriving design teams through craft and coaching.
-        </motion.div>
+        </motion.p>
       </div>
 
       {/* Scroll indicator */}
