@@ -1,6 +1,6 @@
 'use client';
 
-import { useScroll, useTransform, motion } from 'framer-motion';
+import { useScroll, useTransform, motion, MotionValue } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import HeroOverlay from '@/components/HeroOverlay';
 import Navigation from '@/components/Navigation';
@@ -14,42 +14,45 @@ const OceanCanvas = dynamic(() => import('@/components/OceanCanvas'), {
   ),
 });
 
+// Helper to use motion value in clip-path
+function useClipPath(progress: MotionValue<number>) {
+  return useTransform(progress, [0.04, 0.18], [
+    'circle(0% at 50% 40%)',
+    'circle(150% at 50% 40%)',
+  ]);
+}
+
 export default function Home() {
   const { scrollYProgress } = useScroll();
 
   // Hero text fades out first as you start scrolling
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.05], [1, 0]);
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.06], [1, 0]);
 
-  // Ocean shader fades and scales slightly as you "dive" into it
-  const shaderOpacity = useTransform(scrollYProgress, [0.02, 0.12], [1, 0]);
-  const shaderScale = useTransform(scrollYProgress, [0, 0.12], [1, 1.03]);
-  const shaderBlur = useTransform(scrollYProgress, [0.06, 0.12], [0, 6]);
+  // Ocean shader fades as the portal opens
+  const shaderOpacity = useTransform(scrollYProgress, [0.08, 0.16], [1, 0]);
 
-  // Content fades in from blur - starts earlier for smoother crossfade
+  // Portal clip-path expands from center
+  const clipPath = useClipPath(scrollYProgress);
+
+  // Content fades in as portal opens
   const contentOpacity = useTransform(scrollYProgress, [0.06, 0.14], [0, 1]);
-  const contentBlur = useTransform(scrollYProgress, [0.06, 0.14], [12, 0]);
 
   return (
     <main className="relative">
-      {/* Fixed layers for the hero experience */}
+      {/* Fixed deep underwater background - this shows through the portal */}
       <div className="fixed inset-0 z-0">
-        {/* Deep ocean background */}
         <div
           className="absolute inset-0"
           style={{
-            background: 'linear-gradient(to bottom, #0d1f2d 0%, #0a1520 40%, #050a0f 100%)',
+            background: 'linear-gradient(to bottom, #0a1a2a 0%, #0d1d2d 30%, #0a1520 100%)',
           }}
         />
       </div>
 
-      {/* Ocean shader - fades, scales, and blurs as you dive through */}
+      {/* Ocean shader - the surface you dive through */}
       <motion.div
-        className="fixed inset-0 z-10 origin-center"
-        style={{
-          opacity: shaderOpacity,
-          scale: shaderScale,
-          filter: useTransform(shaderBlur, (v) => `blur(${v}px)`),
-        }}
+        className="fixed inset-0 z-10"
+        style={{ opacity: shaderOpacity }}
       >
         <OceanCanvas />
       </motion.div>
@@ -62,33 +65,33 @@ export default function Home() {
         <HeroOverlay />
       </motion.div>
 
+      {/* Underwater content - revealed through expanding portal */}
+      <motion.div
+        className="fixed inset-0 z-15 overflow-hidden"
+        style={{
+          clipPath,
+          opacity: contentOpacity,
+        }}
+      >
+        {/* Dark vignette overlay for depth feel */}
+        <div
+          className="absolute inset-0 pointer-events-none z-50"
+          style={{
+            background: 'radial-gradient(ellipse at 50% 0%, transparent 0%, transparent 60%, rgba(5,10,15,0.4) 100%)',
+          }}
+        />
+        <div className="absolute inset-0 overflow-y-auto bg-[#0d1520]">
+          <SiteContent />
+        </div>
+      </motion.div>
+
       {/* Navigation */}
       <div className="fixed top-0 left-0 right-0 z-50">
         <Navigation />
       </div>
 
-      {/* Scroll spacer for hero section */}
-      <div className="h-[100vh]" />
-
-      {/* Main scrollable content - fades in from blur */}
-      <motion.div
-        className="relative z-30"
-        style={{
-          opacity: contentOpacity,
-          filter: useTransform(contentBlur, (v) => `blur(${v}px)`),
-        }}
-      >
-        {/* Gradient transition from ocean to content */}
-        <div
-          className="h-32 w-full"
-          style={{
-            background: 'linear-gradient(to bottom, transparent 0%, #151515 100%)',
-          }}
-        />
-        <div className="bg-[#151515]">
-          <SiteContent />
-        </div>
-      </motion.div>
+      {/* Scroll trigger - gives us scroll distance to work with */}
+      <div className="h-[400vh]" />
     </main>
   );
 }
