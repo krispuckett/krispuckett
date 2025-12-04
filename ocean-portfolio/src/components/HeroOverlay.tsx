@@ -28,6 +28,11 @@ export default function HeroOverlay({ opacity = 1 }: HeroOverlayProps) {
         }}
       />
 
+      {/* DEBUG - remove me */}
+      <div className="fixed top-4 left-4 bg-red-500 text-white p-4 z-[9999]">
+        DEBUG: heroSize = {heroSize}
+      </div>
+
       {/* Hero text */}
       <div className="absolute bottom-24 left-0 px-8 md:px-16">
         <motion.div
