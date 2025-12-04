@@ -20,7 +20,7 @@ uniform vec4 iMouse;
 
 #define DRAG_MULT 0.38
 #define WATER_DEPTH 1.0
-#define CAMERA_HEIGHT 1.5
+#define CAMERA_HEIGHT 1.2
 #define ITERATIONS_RAYMARCH 12
 #define ITERATIONS_NORMAL 36
 
@@ -103,7 +103,7 @@ vec3 getRay(vec2 fragCoord) {
 
   vec2 normalizedMouse = iMouse.xy / iResolution.xy;
   float mouseX = normalizedMouse.x;
-  float mouseY = normalizedMouse.y == 0.0 ? 0.27 : normalizedMouse.y;
+  float mouseY = normalizedMouse.y == 0.0 ? 0.35 : normalizedMouse.y;
 
   return createRotationMatrixAxisAngle(vec3(0.0, -1.0, 0.0), 3.0 * ((mouseX + 0.5) * 2.0 - 1.0))
     * createRotationMatrixAxisAngle(vec3(1.0, 0.0, 0.0), 0.5 + 1.5 * ((mouseY * 1.0) * 2.0 - 1.0))

@@ -18,43 +18,29 @@ export default function Home() {
   const { scrollYProgress } = useScroll();
 
   // Hero text fades out first as you start scrolling
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.08], [1, 0]);
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.05], [1, 0]);
 
   // Ocean shader fades and scales slightly as you "dive" into it
-  const shaderOpacity = useTransform(scrollYProgress, [0.05, 0.25], [1, 0]);
-  const shaderScale = useTransform(scrollYProgress, [0, 0.25], [1, 1.1]);
-  const shaderBlur = useTransform(scrollYProgress, [0.1, 0.25], [0, 8]);
-
-  // Content fades/blurs in as shader fades out
-  const contentOpacity = useTransform(scrollYProgress, [0.15, 0.35], [0, 1]);
-  const contentBlur = useTransform(scrollYProgress, [0.15, 0.35], [12, 0]);
+  const shaderOpacity = useTransform(scrollYProgress, [0.03, 0.15], [1, 0]);
+  const shaderScale = useTransform(scrollYProgress, [0, 0.15], [1, 1.05]);
+  const shaderBlur = useTransform(scrollYProgress, [0.08, 0.15], [0, 8]);
 
   return (
     <main className="relative">
-      {/* Deep ocean background - visible as shader fades */}
-      <div
-        className="fixed inset-0 z-0"
-        style={{
-          background: 'linear-gradient(to bottom, #0d1f2d 0%, #0a1520 40%, #050a0f 100%)',
-        }}
-      />
-
-      {/* Site content - fades in from blur */}
-      <motion.div
-        className="fixed inset-0 z-10"
-        style={{
-          opacity: contentOpacity,
-          filter: useTransform(contentBlur, (v) => `blur(${v}px)`),
-        }}
-      >
-        <div className="min-h-screen bg-[#1a1a1a]">
-          <SiteContent />
-        </div>
-      </motion.div>
+      {/* Fixed layers for the hero experience */}
+      <div className="fixed inset-0 z-0">
+        {/* Deep ocean background */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: 'linear-gradient(to bottom, #0d1f2d 0%, #0a1520 40%, #050a0f 100%)',
+          }}
+        />
+      </div>
 
       {/* Ocean shader - fades, scales, and blurs as you dive through */}
       <motion.div
-        className="fixed inset-0 z-40 origin-center"
+        className="fixed inset-0 z-10 origin-center pointer-events-none"
         style={{
           opacity: shaderOpacity,
           scale: shaderScale,
@@ -66,19 +52,24 @@ export default function Home() {
 
       {/* Hero text overlay */}
       <motion.div
-        className="fixed inset-0 z-50 pointer-events-none"
+        className="fixed inset-0 z-20 pointer-events-none"
         style={{ opacity: heroOpacity }}
       >
         <HeroOverlay />
       </motion.div>
 
       {/* Navigation */}
-      <div className="relative z-[60]">
+      <div className="fixed top-0 left-0 right-0 z-50">
         <Navigation />
       </div>
 
-      {/* Scroll spacer */}
-      <div className="h-[200vh]" />
+      {/* Scroll spacer for hero section */}
+      <div className="h-[100vh]" />
+
+      {/* Main scrollable content */}
+      <div className="relative z-30 bg-[#151515]">
+        <SiteContent />
+      </div>
     </main>
   );
 }
