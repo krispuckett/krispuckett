@@ -96,6 +96,13 @@ export default function SiteContent() {
           <ContentShader />
         </div>
 
+        {/* Progressive blur at TOP - blends ocean shader into Unicorn shader */}
+        <div className="absolute inset-x-0 top-0 h-[80px] pointer-events-none z-[2]">
+          <div className="absolute inset-0 backdrop-blur-[8px]" style={{ maskImage: 'linear-gradient(to bottom, black 0%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, black 0%, transparent 100%)' }} />
+          <div className="absolute inset-0 backdrop-blur-[4px]" style={{ maskImage: 'linear-gradient(to bottom, black 25%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, black 25%, transparent 100%)' }} />
+          <div className="absolute inset-0 backdrop-blur-[2px]" style={{ maskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)' }} />
+        </div>
+
         {/* Gradient fade to dark at bottom of shader section */}
         <div
           className="absolute inset-x-0 bottom-0 h-[200px] z-[1] pointer-events-none"
