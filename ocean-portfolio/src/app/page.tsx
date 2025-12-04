@@ -22,29 +22,35 @@ const ContentShader = dynamic(() => import('@/components/ContentShader'), {
 export default function Home() {
   const { scrollYProgress } = useScroll();
 
-  // Hero text fades out first
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.05], [1, 0]);
+  // Hero text fades out quickly
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.02], [1, 0]);
 
-  // Ocean shader fades out to reveal underwater
-  const shaderOpacity = useTransform(scrollYProgress, [0.02, 0.12], [1, 0]);
+  // Ocean shader fades out fast to reveal underwater
+  const shaderOpacity = useTransform(scrollYProgress, [0, 0.06], [1, 0]);
 
-  // Underwater shader fades in
-  const underwaterOpacity = useTransform(scrollYProgress, [0.04, 0.12], [0, 1]);
+  // Underwater shader is always visible once ocean fades
+  const underwaterOpacity = useTransform(scrollYProgress, [0.01, 0.05], [0, 1]);
 
-  // Content text fades in
-  const contentOpacity = useTransform(scrollYProgress, [0.08, 0.16], [0, 1]);
+  // Content text fades in quickly, in sync with underwater
+  const contentOpacity = useTransform(scrollYProgress, [0.02, 0.06], [0, 1]);
 
   return (
     <main className="relative">
       {/* Layer 0: Deep dark background */}
       <div className="fixed inset-0 z-0 bg-[#0a1015]" />
 
-      {/* Layer 1: Underwater caustics shader - always there, fades in */}
+      {/* Layer 1: Underwater caustics shader - fades in as ocean fades */}
       <motion.div
         className="fixed inset-0 z-[5]"
-        style={{ opacity: underwaterOpacity }}
+        style={{
+          opacity: underwaterOpacity,
+          width: '100vw',
+          height: '100vh',
+        }}
       >
-        <ContentShader />
+        <div className="w-full h-full">
+          <ContentShader />
+        </div>
       </motion.div>
 
       {/* Layer 2: Ocean surface shader - fades out as you dive */}
