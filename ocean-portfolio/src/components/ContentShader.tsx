@@ -285,7 +285,7 @@ export default function ContentShader() {
   return (
     <div
       ref={containerRef}
-      className="absolute inset-0 -z-10"
+      className="w-full h-full"
       style={{ pointerEvents: 'auto' }}
     />
   );
