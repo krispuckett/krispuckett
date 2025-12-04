@@ -72,13 +72,22 @@ export default function Home() {
 
       {/* Main scrollable content - fades in from blur */}
       <motion.div
-        className="relative z-30 bg-[#151515]"
+        className="relative z-30"
         style={{
           opacity: contentOpacity,
           filter: useTransform(contentBlur, (v) => `blur(${v}px)`),
         }}
       >
-        <SiteContent />
+        {/* Gradient transition from ocean to content */}
+        <div
+          className="h-32 w-full"
+          style={{
+            background: 'linear-gradient(to bottom, transparent 0%, #151515 100%)',
+          }}
+        />
+        <div className="bg-[#151515]">
+          <SiteContent />
+        </div>
       </motion.div>
     </main>
   );
