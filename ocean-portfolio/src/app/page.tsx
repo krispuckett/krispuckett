@@ -25,6 +25,10 @@ export default function Home() {
   const shaderScale = useTransform(scrollYProgress, [0, 0.15], [1, 1.05]);
   const shaderBlur = useTransform(scrollYProgress, [0.08, 0.15], [0, 8]);
 
+  // Content fades in from blur as you scroll past the ocean
+  const contentOpacity = useTransform(scrollYProgress, [0.08, 0.2], [0, 1]);
+  const contentBlur = useTransform(scrollYProgress, [0.08, 0.2], [20, 0]);
+
   return (
     <main className="relative">
       {/* Fixed layers for the hero experience */}
@@ -66,10 +70,16 @@ export default function Home() {
       {/* Scroll spacer for hero section */}
       <div className="h-[100vh]" />
 
-      {/* Main scrollable content */}
-      <div className="relative z-30 bg-[#151515]">
+      {/* Main scrollable content - fades in from blur */}
+      <motion.div
+        className="relative z-30 bg-[#151515]"
+        style={{
+          opacity: contentOpacity,
+          filter: useTransform(contentBlur, (v) => `blur(${v}px)`),
+        }}
+      >
         <SiteContent />
-      </div>
+      </motion.div>
     </main>
   );
 }
