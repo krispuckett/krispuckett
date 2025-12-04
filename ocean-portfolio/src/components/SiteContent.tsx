@@ -86,21 +86,6 @@ export default function SiteContent() {
         <div className="absolute inset-x-0 top-0 h-64 caustic-light pointer-events-none" />
 
         <div className="relative max-w-[680px] mx-auto">
-          {/* Kris signature with glow */}
-          <motion.div
-            className="mb-12"
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
-          >
-            <span
-              className="text-fluid-lg font-serif italic text-white/80 text-glow"
-            >
-              — Kris
-            </span>
-          </motion.div>
-
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -183,6 +168,14 @@ export default function SiteContent() {
                 ))}
               </div>
             </motion.div>
+
+            {/* Signature at bottom like a letter */}
+            <motion.p
+              className="font-serif text-fluid-lg text-white/60 pt-12 italic"
+              variants={fadeIn}
+            >
+              — Kris
+            </motion.p>
           </motion.div>
         </div>
       </section>

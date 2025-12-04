@@ -26,9 +26,9 @@ function BirdIcon({ className = '' }: { className?: string }) {
 export default function Navigation() {
   const { scrollYProgress } = useScroll();
 
-  // Navigation appears after diving
-  const navOpacity = useTransform(scrollYProgress, [0.25, 0.4], [0, 1]);
-  const navY = useTransform(scrollYProgress, [0.25, 0.4], [-20, 0]);
+  // Navigation appears early as you start scrolling
+  const navOpacity = useTransform(scrollYProgress, [0.05, 0.12], [0, 1]);
+  const navY = useTransform(scrollYProgress, [0.05, 0.12], [-20, 0]);
 
   return (
     <motion.nav
@@ -38,8 +38,12 @@ export default function Navigation() {
         y: navY,
       }}
     >
-      {/* Pill-shaped container */}
-      <div className="flex items-center gap-1 bg-[#2a2a2a]/95 backdrop-blur-sm rounded-full px-2 py-2 shadow-lg border border-white/5">
+      {/* Pill-shaped glass container */}
+      <div className="flex items-center gap-1 bg-white/10 backdrop-blur-xl rounded-full px-2 py-2 shadow-lg border border-white/20"
+        style={{
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+        }}
+      >
         {/* Bird icon */}
         <Link
           href="/"

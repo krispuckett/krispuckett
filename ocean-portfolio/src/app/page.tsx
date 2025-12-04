@@ -21,13 +21,13 @@ export default function Home() {
   const heroOpacity = useTransform(scrollYProgress, [0, 0.05], [1, 0]);
 
   // Ocean shader fades and scales slightly as you "dive" into it
-  const shaderOpacity = useTransform(scrollYProgress, [0.03, 0.15], [1, 0]);
-  const shaderScale = useTransform(scrollYProgress, [0, 0.15], [1, 1.05]);
-  const shaderBlur = useTransform(scrollYProgress, [0.08, 0.15], [0, 8]);
+  const shaderOpacity = useTransform(scrollYProgress, [0.02, 0.12], [1, 0]);
+  const shaderScale = useTransform(scrollYProgress, [0, 0.12], [1, 1.03]);
+  const shaderBlur = useTransform(scrollYProgress, [0.06, 0.12], [0, 6]);
 
-  // Content fades in from blur as you scroll past the ocean
-  const contentOpacity = useTransform(scrollYProgress, [0.08, 0.2], [0, 1]);
-  const contentBlur = useTransform(scrollYProgress, [0.08, 0.2], [20, 0]);
+  // Content fades in from blur - starts earlier for smoother crossfade
+  const contentOpacity = useTransform(scrollYProgress, [0.06, 0.14], [0, 1]);
+  const contentBlur = useTransform(scrollYProgress, [0.06, 0.14], [12, 0]);
 
   return (
     <main className="relative">
