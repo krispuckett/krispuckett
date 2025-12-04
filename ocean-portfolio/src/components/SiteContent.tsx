@@ -72,27 +72,48 @@ const namesRight = [
   'Katy Puckett',
 ];
 
+// Blur fade in animation for content
+const blurFadeIn = {
+  hidden: { opacity: 0, y: 20, filter: 'blur(10px)' },
+  visible: {
+    opacity: 1,
+    y: 0,
+    filter: 'blur(0px)',
+    transition: {
+      duration: 0.6,
+      ease: [0.25, 0.46, 0.45, 0.94],
+    },
+  },
+};
+
 export default function SiteContent() {
   return (
-    <div className="min-h-screen relative bg-[#0a1520]">
-      {/* Underwater caustics shader background */}
-      <div className="absolute inset-x-0 top-0 h-[100vh] z-0">
-        <ContentShader />
-      </div>
+    <div className="min-h-screen relative">
+      {/* About Section - has Unicorn shader background */}
+      <section id="about" className="relative min-h-screen">
+        {/* Unicorn shader - only for this section */}
+        <div className="absolute inset-0 z-0">
+          <ContentShader />
+        </div>
 
-      {/* About Section */}
-      <section id="about" className="relative z-10 min-h-screen px-6 md:px-12 py-24 md:py-32">
-        {/* Caustic light effect at top */}
-        <div className="absolute inset-x-0 top-0 h-64 caustic-light pointer-events-none" />
+        {/* Gradient fade to dark at bottom of shader section */}
+        <div
+          className="absolute inset-x-0 bottom-0 h-[200px] z-[1] pointer-events-none"
+          style={{
+            background: 'linear-gradient(to bottom, transparent, #151515)',
+          }}
+        />
 
-        <div className="relative max-w-[680px] mx-auto">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.2 }}
-            variants={staggerContainer}
-            className="space-y-8"
-          >
+        {/* About content - blurs in after shader is visible */}
+        <div className="relative z-10 px-6 md:px-12 py-24 md:py-32">
+          <div className="relative max-w-[680px] mx-auto">
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.3, margin: "-100px" }}
+              variants={staggerContainer}
+              className="space-y-8"
+            >
             {/* Main story */}
             <motion.p
               className="font-serif text-fluid-lg text-white/75 leading-[1.7] will-change-transform"
@@ -177,11 +198,12 @@ export default function SiteContent() {
               — Kris
             </motion.p>
           </motion.div>
+          </div>
         </div>
       </section>
 
-      {/* Words Section */}
-      <section id="words" className="relative z-10 min-h-screen px-6 md:px-12 py-24 md:py-32 border-t border-white/5">
+      {/* Words Section - plain dark background */}
+      <section id="words" className="relative bg-[#151515] min-h-screen px-6 md:px-12 py-24 md:py-32">
         <div className="max-w-[680px] mx-auto">
           <motion.h2
             className="text-fluid-2xl font-medium text-white/90 mb-16 tracking-tight will-change-transform"
@@ -240,8 +262,8 @@ export default function SiteContent() {
         </div>
       </section>
 
-      {/* Contact Section */}
-      <section id="contact" className="relative z-10 min-h-[50vh] flex items-center justify-center px-6 md:px-12 py-24 md:py-32 border-t border-white/5">
+      {/* Contact Section - plain dark background */}
+      <section id="contact" className="relative bg-[#151515] min-h-[50vh] flex items-center justify-center px-6 md:px-12 py-24 md:py-32 border-t border-white/10">
         <motion.div
           className="text-center max-w-xl will-change-transform"
           initial={{ opacity: 0, y: 20 }}
@@ -275,8 +297,8 @@ export default function SiteContent() {
         </motion.div>
       </section>
 
-      {/* Footer */}
-      <footer className="relative z-10 px-6 md:px-12 py-12 border-t border-white/5">
+      {/* Footer - plain dark background */}
+      <footer className="relative bg-[#151515] px-6 md:px-12 py-12 border-t border-white/10">
         <div className="max-w-[680px] mx-auto space-y-6">
           <div className="flex items-center justify-between">
             <p className="text-fluid-xs text-white/25 tracking-wide">
