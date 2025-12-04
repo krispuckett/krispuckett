@@ -1,6 +1,5 @@
 'use client';
 
-import { motion, useScroll, useTransform } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -24,20 +23,8 @@ function BirdIcon({ className = '' }: { className?: string }) {
 }
 
 export default function Navigation() {
-  const { scrollYProgress } = useScroll();
-
-  // Navigation appears early as you start scrolling
-  const navOpacity = useTransform(scrollYProgress, [0.05, 0.12], [0, 1]);
-  const navY = useTransform(scrollYProgress, [0.05, 0.12], [-20, 0]);
-
   return (
-    <motion.nav
-      className="fixed top-6 left-1/2 -translate-x-1/2 z-50"
-      style={{
-        opacity: navOpacity,
-        y: navY,
-      }}
-    >
+    <nav className="fixed top-6 left-1/2 -translate-x-1/2 z-50">
       {/* Pill-shaped glass container */}
       <div className="flex items-center gap-1 bg-white/10 backdrop-blur-xl rounded-full px-2 py-2 shadow-lg border border-white/20"
         style={{
@@ -85,6 +72,6 @@ export default function Navigation() {
           </div>
         </Link>
       </div>
-    </motion.nav>
+    </nav>
   );
 }
