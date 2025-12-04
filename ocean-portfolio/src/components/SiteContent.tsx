@@ -1,13 +1,6 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import dynamic from 'next/dynamic';
-
-// Dynamic import for shader to avoid SSR issues
-const ContentShader = dynamic(() => import('./ContentShader'), {
-  ssr: false,
-  loading: () => null,
-});
 
 // Spring config for entering elements
 const springEnter = {
@@ -75,12 +68,7 @@ const namesRight = [
 export default function SiteContent() {
   return (
     <div className="min-h-screen relative">
-      {/* Background shader effect - just at top of content */}
-      <div className="absolute inset-x-0 top-0 h-[80vh] z-0">
-        <ContentShader />
-      </div>
-
-      {/* About Section */}
+      {/* About Section - transparent so underwater shader shows through */}
       <section id="about" className="relative z-10 min-h-screen px-6 md:px-12 py-24 md:py-32">
         {/* Caustic light effect at top */}
         <div className="absolute inset-x-0 top-0 h-64 caustic-light pointer-events-none" />

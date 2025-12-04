@@ -6,12 +6,17 @@ import HeroOverlay from '@/components/HeroOverlay';
 import Navigation from '@/components/Navigation';
 import SiteContent from '@/components/SiteContent';
 
-// Dynamic import for OceanCanvas to avoid SSR issues with Three.js
+// Dynamic imports for shaders
 const OceanCanvas = dynamic(() => import('@/components/OceanCanvas'), {
   ssr: false,
   loading: () => (
     <div className="fixed inset-0 bg-gradient-to-b from-[#1a3a5c] to-[#0a1a2e]" />
   ),
+});
+
+const ContentShader = dynamic(() => import('@/components/ContentShader'), {
+  ssr: false,
+  loading: () => null,
 });
 
 export default function Home() {
@@ -20,25 +25,29 @@ export default function Home() {
   // Hero text fades out first
   const heroOpacity = useTransform(scrollYProgress, [0, 0.05], [1, 0]);
 
-  // Ocean shader fades out
+  // Ocean shader fades out to reveal underwater
   const shaderOpacity = useTransform(scrollYProgress, [0.02, 0.12], [1, 0]);
 
-  // Content fades in
-  const contentOpacity = useTransform(scrollYProgress, [0.06, 0.14], [0, 1]);
+  // Underwater shader fades in
+  const underwaterOpacity = useTransform(scrollYProgress, [0.04, 0.12], [0, 1]);
+
+  // Content text fades in
+  const contentOpacity = useTransform(scrollYProgress, [0.08, 0.16], [0, 1]);
 
   return (
     <main className="relative">
-      {/* Deep ocean background */}
-      <div className="fixed inset-0 z-0">
-        <div
-          className="absolute inset-0"
-          style={{
-            background: 'linear-gradient(to bottom, #0d1f2d 0%, #0a1520 40%, #050a0f 100%)',
-          }}
-        />
-      </div>
+      {/* Layer 0: Deep dark background */}
+      <div className="fixed inset-0 z-0 bg-[#0a1015]" />
 
-      {/* Ocean shader */}
+      {/* Layer 1: Underwater caustics shader - always there, fades in */}
+      <motion.div
+        className="fixed inset-0 z-[5]"
+        style={{ opacity: underwaterOpacity }}
+      >
+        <ContentShader />
+      </motion.div>
+
+      {/* Layer 2: Ocean surface shader - fades out as you dive */}
       <motion.div
         className="fixed inset-0 z-10"
         style={{ opacity: shaderOpacity }}
@@ -46,7 +55,7 @@ export default function Home() {
         <OceanCanvas />
       </motion.div>
 
-      {/* Hero text */}
+      {/* Layer 3: Hero text */}
       <motion.div
         className="fixed inset-0 z-20 pointer-events-none"
         style={{ opacity: heroOpacity }}
@@ -59,12 +68,12 @@ export default function Home() {
         <Navigation />
       </div>
 
-      {/* Scroll spacer */}
+      {/* Scroll spacer for hero */}
       <div className="h-[100vh]" />
 
-      {/* Content */}
+      {/* Content - transparent background, scrolls over the fixed underwater shader */}
       <motion.div
-        className="relative z-30 bg-[#151515]"
+        className="relative z-30"
         style={{ opacity: contentOpacity }}
       >
         <SiteContent />
