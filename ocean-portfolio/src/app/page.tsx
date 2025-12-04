@@ -1,6 +1,6 @@
 'use client';
 
-import { useScroll, useTransform, motion, MotionValue } from 'framer-motion';
+import { useScroll, useTransform, motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import HeroOverlay from '@/components/HeroOverlay';
 import Navigation from '@/components/Navigation';
@@ -14,42 +14,31 @@ const OceanCanvas = dynamic(() => import('@/components/OceanCanvas'), {
   ),
 });
 
-// Helper to use motion value in clip-path
-function useClipPath(progress: MotionValue<number>) {
-  return useTransform(progress, [0.04, 0.18], [
-    'circle(0% at 50% 40%)',
-    'circle(150% at 50% 40%)',
-  ]);
-}
-
 export default function Home() {
   const { scrollYProgress } = useScroll();
 
-  // Hero text fades out first as you start scrolling
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.06], [1, 0]);
+  // Hero text fades out first
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.05], [1, 0]);
 
-  // Ocean shader fades as the portal opens
-  const shaderOpacity = useTransform(scrollYProgress, [0.08, 0.16], [1, 0]);
+  // Ocean shader fades out
+  const shaderOpacity = useTransform(scrollYProgress, [0.02, 0.12], [1, 0]);
 
-  // Portal clip-path expands from center
-  const clipPath = useClipPath(scrollYProgress);
-
-  // Content fades in as portal opens
+  // Content fades in
   const contentOpacity = useTransform(scrollYProgress, [0.06, 0.14], [0, 1]);
 
   return (
     <main className="relative">
-      {/* Fixed deep underwater background - this shows through the portal */}
+      {/* Deep ocean background */}
       <div className="fixed inset-0 z-0">
         <div
           className="absolute inset-0"
           style={{
-            background: 'linear-gradient(to bottom, #0a1a2a 0%, #0d1d2d 30%, #0a1520 100%)',
+            background: 'linear-gradient(to bottom, #0d1f2d 0%, #0a1520 40%, #050a0f 100%)',
           }}
         />
       </div>
 
-      {/* Ocean shader - the surface you dive through */}
+      {/* Ocean shader */}
       <motion.div
         className="fixed inset-0 z-10"
         style={{ opacity: shaderOpacity }}
@@ -57,7 +46,7 @@ export default function Home() {
         <OceanCanvas />
       </motion.div>
 
-      {/* Hero text overlay */}
+      {/* Hero text */}
       <motion.div
         className="fixed inset-0 z-20 pointer-events-none"
         style={{ opacity: heroOpacity }}
@@ -65,33 +54,21 @@ export default function Home() {
         <HeroOverlay />
       </motion.div>
 
-      {/* Underwater content - revealed through expanding portal */}
-      <motion.div
-        className="fixed inset-0 z-15 overflow-hidden"
-        style={{
-          clipPath,
-          opacity: contentOpacity,
-        }}
-      >
-        {/* Dark vignette overlay for depth feel */}
-        <div
-          className="absolute inset-0 pointer-events-none z-50"
-          style={{
-            background: 'radial-gradient(ellipse at 50% 0%, transparent 0%, transparent 60%, rgba(5,10,15,0.4) 100%)',
-          }}
-        />
-        <div className="absolute inset-0 overflow-y-auto bg-[#0d1520]">
-          <SiteContent />
-        </div>
-      </motion.div>
-
       {/* Navigation */}
       <div className="fixed top-0 left-0 right-0 z-50">
         <Navigation />
       </div>
 
-      {/* Scroll trigger - gives us scroll distance to work with */}
-      <div className="h-[400vh]" />
+      {/* Scroll spacer */}
+      <div className="h-[100vh]" />
+
+      {/* Content */}
+      <motion.div
+        className="relative z-30 bg-[#151515]"
+        style={{ opacity: contentOpacity }}
+      >
+        <SiteContent />
+      </motion.div>
     </main>
   );
 }
