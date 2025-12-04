@@ -75,8 +75,8 @@ const namesRight = [
 export default function SiteContent() {
   return (
     <div className="min-h-screen relative">
-      {/* Background shader effect - contained within content area */}
-      <div className="absolute inset-0 z-0">
+      {/* Background shader effect - just at top of content */}
+      <div className="absolute inset-x-0 top-0 h-[80vh] z-0">
         <ContentShader />
       </div>
 
