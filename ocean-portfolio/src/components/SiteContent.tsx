@@ -1,6 +1,13 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import dynamic from 'next/dynamic';
+
+// Dynamic import for shader to avoid SSR issues
+const ContentShader = dynamic(() => import('./ContentShader'), {
+  ssr: false,
+  loading: () => null,
+});
 
 // Spring config for entering elements
 const springEnter = {
@@ -67,9 +74,14 @@ const namesRight = [
 
 export default function SiteContent() {
   return (
-    <div className="min-h-screen bg-abyss">
+    <div className="min-h-screen relative">
+      {/* Background shader effect */}
+      <div className="fixed inset-0 z-0">
+        <ContentShader />
+      </div>
+
       {/* About Section */}
-      <section id="about" className="relative min-h-screen px-6 md:px-12 py-24 md:py-32">
+      <section id="about" className="relative z-10 min-h-screen px-6 md:px-12 py-24 md:py-32">
         {/* Caustic light effect at top */}
         <div className="absolute inset-x-0 top-0 h-64 caustic-light pointer-events-none" />
 
@@ -176,7 +188,7 @@ export default function SiteContent() {
       </section>
 
       {/* Words Section */}
-      <section id="words" className="min-h-screen px-6 md:px-12 py-24 md:py-32 border-t border-white/5">
+      <section id="words" className="relative z-10 min-h-screen px-6 md:px-12 py-24 md:py-32 border-t border-white/5">
         <div className="max-w-[680px] mx-auto">
           <motion.h2
             className="text-fluid-2xl font-medium text-white/90 mb-16 tracking-tight will-change-transform"
@@ -236,7 +248,7 @@ export default function SiteContent() {
       </section>
 
       {/* Contact Section */}
-      <section id="contact" className="min-h-[50vh] flex items-center justify-center px-6 md:px-12 py-24 md:py-32 border-t border-white/5">
+      <section id="contact" className="relative z-10 min-h-[50vh] flex items-center justify-center px-6 md:px-12 py-24 md:py-32 border-t border-white/5">
         <motion.div
           className="text-center max-w-xl will-change-transform"
           initial={{ opacity: 0, y: 20 }}
@@ -271,7 +283,7 @@ export default function SiteContent() {
       </section>
 
       {/* Footer */}
-      <footer className="px-6 md:px-12 py-12 border-t border-white/5">
+      <footer className="relative z-10 px-6 md:px-12 py-12 border-t border-white/5">
         <div className="max-w-[680px] mx-auto space-y-6">
           <div className="flex items-center justify-between">
             <p className="text-fluid-xs text-white/25 tracking-wide">
