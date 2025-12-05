@@ -4,6 +4,95 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 // ============================================================================
+// Official Shopify Polaris Filled Icons from @shopify/polaris-icons
+// Using filled variants for bolder, more visible icons
+// ============================================================================
+
+const CmdIcons = {
+  // Action icons
+  transfer: (
+    <svg viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+      <path d="M3.75 4a.75.75 0 0 1 .75.75v4.5h6.69l-1.72-1.72a.75.75 0 0 1 1.06-1.06l3 3a.75.75 0 0 1 0 1.06l-3 3a.75.75 0 1 1-1.06-1.06l1.72-1.72h-6.69v4.5a.75.75 0 0 1-1.5 0v-10.5a.75.75 0 0 1 .75-.75Z"/>
+      <path d="M16.25 4a.75.75 0 0 1 .75.75v10.5a.75.75 0 0 1-1.5 0v-10.5a.75.75 0 0 1 .75-.75Z"/>
+    </svg>
+  ),
+  adjust: (
+    <svg viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+      <path d="M10.75 5.75c0-.414-.336-.75-.75-.75s-.75.336-.75.75v3.5h-3.5c-.414 0-.75.336-.75.75s.336.75.75.75h3.5v3.5c0 .414.336.75.75.75s.75-.336.75-.75v-3.5h3.5c.414 0 .75-.336.75-.75s-.336-.75-.75-.75h-3.5v-3.5Z"/>
+    </svg>
+  ),
+  receive: (
+    <svg viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+      <path fillRule="evenodd" d="M4.255 5.847a2.75 2.75 0 0 1 2.72-2.347h6.05a2.75 2.75 0 0 1 2.72 2.347l.66 4.46c.063.425.095.853.095 1.282v1.661a3.25 3.25 0 0 1-3.25 3.25h-6.5a3.25 3.25 0 0 1-3.25-3.25v-1.66c0-.43.032-.858.094-1.283l.661-4.46Zm2.72-.847a1.25 1.25 0 0 0-1.236 1.067l-.583 3.933h2.484a1.25 1.25 0 0 1 1.185.855l.159.474a.25.25 0 0 0 .237.171h1.558a.25.25 0 0 0 .237-.17l.159-.475a1.25 1.25 0 0 1 1.185-.855h2.484l-.583-3.933a1.25 1.25 0 0 0-1.236-1.067h-6.05Z"/>
+    </svg>
+  ),
+  count: (
+    <svg viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+      <path fillRule="evenodd" d="M8.77 3.406a2.25 2.25 0 0 1 2.46 0l3.569 2.328a3.75 3.75 0 0 1 1.701 3.141v6.875c0 .69-.56 1.25-1.25 1.25h-10.5c-.69 0-1.25-.56-1.25-1.25v-6.875a3.75 3.75 0 0 1 1.702-3.141l3.569-2.328Zm.73 9.844a.5.5 0 0 0-.5-.5h-1.5a.5.5 0 0 0-.5.5v2a.5.5 0 0 0 .5.5h1.5a.5.5 0 0 0 .5-.5v-2Zm1.25-4.5a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-1.5a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 1 .5-.5h1.5Zm2.25 4.5a.5.5 0 0 0-.5-.5h-1.5a.5.5 0 0 0-.5.5v2a.5.5 0 0 0 .5.5h1.5a.5.5 0 0 0 .5-.5v-2Z"/>
+    </svg>
+  ),
+  // Location icons - using filled variants
+  warehouse: (
+    <svg viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+      <path fillRule="evenodd" d="M8.77 3.406a2.25 2.25 0 0 1 2.46 0l3.569 2.328a3.75 3.75 0 0 1 1.701 3.141v6.875c0 .69-.56 1.25-1.25 1.25h-10.5c-.69 0-1.25-.56-1.25-1.25v-6.875a3.75 3.75 0 0 1 1.702-3.141l3.569-2.328Zm.73 9.844a.5.5 0 0 0-.5-.5h-1.5a.5.5 0 0 0-.5.5v2a.5.5 0 0 0 .5.5h1.5a.5.5 0 0 0 .5-.5v-2Zm1.25-4.5a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-1.5a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 1 .5-.5h1.5Zm2.25 4.5a.5.5 0 0 0-.5-.5h-1.5a.5.5 0 0 0-.5.5v2a.5.5 0 0 0 .5.5h1.5a.5.5 0 0 0 .5-.5v-2Z"/>
+    </svg>
+  ),
+  store: (
+    <svg viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+      <path d="M12.278 3a2.75 2.75 0 0 1 2.162 1.051l2.16 2.75.01.013c.736 1.03.238 2.396-.831 2.811h-1.17c-.475 0-.915-.244-1.166-.646l-.663-1.06a.624.624 0 0 0-1.137.184l-.075.298a1.616 1.616 0 0 1-3.136 0l-.075-.298a.628.628 0 0 0-.637-.477.624.624 0 0 0-.5.293l-.662 1.06a1.375 1.375 0 0 1-1.166.646h-1.17c-1.07-.415-1.568-1.781-.832-2.81l.01-.015 2.16-2.749a2.75 2.75 0 0 1 2.162-1.051h4.556Z"/>
+      <path fillRule="evenodd" d="M4.5 10.875v4.375c0 .966.784 1.75 1.75 1.75h7.5a1.75 1.75 0 0 0 1.75-1.75v-4.375h-.892a2.625 2.625 0 0 1-2.226-1.234l-.012-.02a2.866 2.866 0 0 1-4.74 0l-.012.02a2.625 2.625 0 0 1-2.226 1.234h-.892Zm8.5 2.475a1 1 0 0 0-1-1h-1a1 1 0 0 0-1 1v2.4c0 .138.112.25.25.25h2.5a.25.25 0 0 0 .25-.25v-2.4Z"/>
+    </svg>
+  ),
+  location: (
+    <svg viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+      <path fillRule="evenodd" d="M10 11a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Zm0-1.5a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/>
+      <path fillRule="evenodd" d="M8.827 16h-3.077a.75.75 0 0 0 0 1.5h8.5a.75.75 0 0 0 0-1.5h-3.077l.07-.061a17.427 17.427 0 0 0 1.707-1.758c1.224-1.46 2.55-3.574 2.55-5.954 0-3.167-2.328-5.477-5.5-5.477s-5.5 2.31-5.5 5.477c0 2.38 1.326 4.495 2.55 5.954a17.426 17.426 0 0 0 1.777 1.819Zm1.173-11.75c-2.35 0-4 1.646-4 3.977 0 1.846 1.049 3.618 2.2 4.99a15.919 15.919 0 0 0 1.8 1.816 15.92 15.92 0 0 0 1.8-1.817c1.151-1.371 2.2-3.143 2.2-4.99 0-2.33-1.65-3.976-4-3.976Z"/>
+    </svg>
+  ),
+  // Product icons - using filled ProductIcon style
+  jacket: (
+    <svg viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+      <path fillRule="evenodd" d="M8.575 4.649a3.75 3.75 0 0 1 2.7-1.149h1.975a3.25 3.25 0 0 1 3.25 3.25v2.187a3.25 3.25 0 0 1-.996 2.34l-4.747 4.572a2.5 2.5 0 0 1-3.502-.033l-2.898-2.898a2.75 2.75 0 0 1-.036-3.852l4.254-4.417Zm4.425 3.351a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/>
+    </svg>
+  ),
+  pants: (
+    <svg viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+      <path fillRule="evenodd" d="M8.575 4.649a3.75 3.75 0 0 1 2.7-1.149h1.975a3.25 3.25 0 0 1 3.25 3.25v2.187a3.25 3.25 0 0 1-.996 2.34l-4.747 4.572a2.5 2.5 0 0 1-3.502-.033l-2.898-2.898a2.75 2.75 0 0 1-.036-3.852l4.254-4.417Zm4.425 3.351a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/>
+    </svg>
+  ),
+  backpack: (
+    <svg viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+      <path fillRule="evenodd" d="M8.575 4.649a3.75 3.75 0 0 1 2.7-1.149h1.975a3.25 3.25 0 0 1 3.25 3.25v2.187a3.25 3.25 0 0 1-.996 2.34l-4.747 4.572a2.5 2.5 0 0 1-3.502-.033l-2.898-2.898a2.75 2.75 0 0 1-.036-3.852l4.254-4.417Zm4.425 3.351a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/>
+    </svg>
+  ),
+  shirt: (
+    <svg viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+      <path fillRule="evenodd" d="M8.575 4.649a3.75 3.75 0 0 1 2.7-1.149h1.975a3.25 3.25 0 0 1 3.25 3.25v2.187a3.25 3.25 0 0 1-.996 2.34l-4.747 4.572a2.5 2.5 0 0 1-3.502-.033l-2.898-2.898a2.75 2.75 0 0 1-.036-3.852l4.254-4.417Zm4.425 3.351a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/>
+    </svg>
+  ),
+  fleece: (
+    <svg viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+      <path fillRule="evenodd" d="M8.575 4.649a3.75 3.75 0 0 1 2.7-1.149h1.975a3.25 3.25 0 0 1 3.25 3.25v2.187a3.25 3.25 0 0 1-.996 2.34l-4.747 4.572a2.5 2.5 0 0 1-3.502-.033l-2.898-2.898a2.75 2.75 0 0 1-.036-3.852l4.254-4.417Zm4.425 3.351a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/>
+    </svg>
+  ),
+  boot: (
+    <svg viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+      <path fillRule="evenodd" d="M8.575 4.649a3.75 3.75 0 0 1 2.7-1.149h1.975a3.25 3.25 0 0 1 3.25 3.25v2.187a3.25 3.25 0 0 1-.996 2.34l-4.747 4.572a2.5 2.5 0 0 1-3.502-.033l-2.898-2.898a2.75 2.75 0 0 1-.036-3.852l4.254-4.417Zm4.425 3.351a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/>
+    </svg>
+  ),
+  gloves: (
+    <svg viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+      <path fillRule="evenodd" d="M8.575 4.649a3.75 3.75 0 0 1 2.7-1.149h1.975a3.25 3.25 0 0 1 3.25 3.25v2.187a3.25 3.25 0 0 1-.996 2.34l-4.747 4.572a2.5 2.5 0 0 1-3.502-.033l-2.898-2.898a2.75 2.75 0 0 1-.036-3.852l4.254-4.417Zm4.425 3.351a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/>
+    </svg>
+  ),
+  cap: (
+    <svg viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+      <path fillRule="evenodd" d="M8.575 4.649a3.75 3.75 0 0 1 2.7-1.149h1.975a3.25 3.25 0 0 1 3.25 3.25v2.187a3.25 3.25 0 0 1-.996 2.34l-4.747 4.572a2.5 2.5 0 0 1-3.502-.033l-2.898-2.898a2.75 2.75 0 0 1-.036-3.852l4.254-4.417Zm4.425 3.351a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/>
+    </svg>
+  ),
+}
+
+// ============================================================================
 // Types
 // ============================================================================
 
@@ -21,7 +110,7 @@ interface Action {
   id: string
   label: string
   description: string
-  icon: string
+  icon: keyof typeof CmdIcons
 }
 
 interface Location {
@@ -36,7 +125,7 @@ interface Product {
   sku: string
   name: string
   variant: string
-  image: string
+  icon: keyof typeof CmdIcons
   stock: number
   price: number
 }
@@ -51,10 +140,10 @@ interface ItemQuantity {
 // ============================================================================
 
 const ACTIONS: Action[] = [
-  { id: 'transfer', label: 'Transfer inventory', description: 'Move items between locations', icon: '↔' },
-  { id: 'adjust', label: 'Adjust inventory', description: 'Update stock quantities', icon: '±' },
-  { id: 'receive', label: 'Receive shipment', description: 'Add incoming inventory', icon: '📦' },
-  { id: 'count', label: 'Cycle count', description: 'Verify inventory accuracy', icon: '📋' },
+  { id: 'transfer', label: 'Transfer inventory', description: 'Move items between locations', icon: 'transfer' },
+  { id: 'adjust', label: 'Adjust inventory', description: 'Update stock quantities', icon: 'adjust' },
+  { id: 'receive', label: 'Receive shipment', description: 'Add incoming inventory', icon: 'receive' },
+  { id: 'count', label: 'Cycle count', description: 'Verify inventory accuracy', icon: 'count' },
 ]
 
 const LOCATIONS: Location[] = [
@@ -66,14 +155,14 @@ const LOCATIONS: Location[] = [
 ]
 
 const PRODUCTS: Product[] = [
-  { id: 'prod-1', sku: 'ALP-JKT-001', name: 'Alpine Summit Jacket', variant: 'Midnight Blue / L', image: '🧥', stock: 24, price: 289 },
-  { id: 'prod-2', sku: 'TRL-PNT-042', name: 'Trailblazer Hiking Pants', variant: 'Stone Grey / 32', image: '👖', stock: 18, price: 129 },
-  { id: 'prod-3', sku: 'BCK-PCK-015', name: 'Backcountry 45L Pack', variant: 'Forest Green', image: '🎒', stock: 12, price: 199 },
-  { id: 'prod-4', sku: 'SUM-TEE-088', name: 'Summit Base Layer Tee', variant: 'Heather Oat / M', image: '👕', stock: 45, price: 59 },
-  { id: 'prod-5', sku: 'RDG-FLC-023', name: 'Ridgeline Fleece Pullover', variant: 'Burnt Orange / XL', image: '🧶', stock: 31, price: 149 },
-  { id: 'prod-6', sku: 'TRK-BT-007', name: 'Trekker Waterproof Boots', variant: 'Brown Leather / 10', image: '🥾', stock: 8, price: 249 },
-  { id: 'prod-7', sku: 'GLV-INS-011', name: 'Insulated Grip Gloves', variant: 'Black / M', image: '🧤', stock: 52, price: 45 },
-  { id: 'prod-8', sku: 'CAP-SUN-033', name: 'Sunshield Trail Cap', variant: 'Sand', image: '🧢', stock: 67, price: 35 },
+  { id: 'prod-1', sku: 'ALP-JKT-001', name: 'Alpine Summit Jacket', variant: 'Midnight Blue / L', icon: 'jacket', stock: 24, price: 289 },
+  { id: 'prod-2', sku: 'TRL-PNT-042', name: 'Trailblazer Hiking Pants', variant: 'Stone Grey / 32', icon: 'pants', stock: 18, price: 129 },
+  { id: 'prod-3', sku: 'BCK-PCK-015', name: 'Backcountry 45L Pack', variant: 'Forest Green', icon: 'backpack', stock: 12, price: 199 },
+  { id: 'prod-4', sku: 'SUM-TEE-088', name: 'Summit Base Layer Tee', variant: 'Heather Oat / M', icon: 'shirt', stock: 45, price: 59 },
+  { id: 'prod-5', sku: 'RDG-FLC-023', name: 'Ridgeline Fleece Pullover', variant: 'Burnt Orange / XL', icon: 'fleece', stock: 31, price: 149 },
+  { id: 'prod-6', sku: 'TRK-BT-007', name: 'Trekker Waterproof Boots', variant: 'Brown Leather / 10', icon: 'boot', stock: 8, price: 249 },
+  { id: 'prod-7', sku: 'GLV-INS-011', name: 'Insulated Grip Gloves', variant: 'Black / M', icon: 'gloves', stock: 52, price: 45 },
+  { id: 'prod-8', sku: 'CAP-SUN-033', name: 'Sunshield Trail Cap', variant: 'Sand', icon: 'cap', stock: 67, price: 35 },
 ]
 
 // ============================================================================
@@ -355,9 +444,9 @@ export default function CommandK({ isOpen, onClose, onTransferComplete }: Comman
 
   const getLocationIcon = (type: Location['type']) => {
     switch (type) {
-      case 'warehouse': return '🏭'
-      case 'store': return '🏪'
-      case 'distribution': return '📍'
+      case 'warehouse': return CmdIcons.warehouse
+      case 'store': return CmdIcons.store
+      case 'distribution': return CmdIcons.location
     }
   }
 
@@ -379,7 +468,7 @@ export default function CommandK({ isOpen, onClose, onTransferComplete }: Comman
         onClick={onClose}
       >
         {/* Backdrop */}
-        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+        <div className="absolute inset-0 bg-black/40" />
 
         {/* Modal */}
         <motion.div
@@ -449,7 +538,7 @@ export default function CommandK({ isOpen, onClose, onTransferComplete }: Comman
                     ${tag.type === 'item' ? 'bg-[#fff5e6] text-[#8a6116]' : ''}
                   `}
                 >
-                  {tag.icon && <span className="text-xs">{tag.icon}</span>}
+                  {tag.icon && <span className="w-4 h-4">{CmdIcons[tag.icon as keyof typeof CmdIcons]}</span>}
                   {tag.label}
                   {tag.type === 'item' && tag.quantity && (
                     <span className="ml-1 px-1.5 py-0.5 bg-white/50 rounded text-xs">×{tag.quantity}</span>
@@ -505,8 +594,8 @@ export default function CommandK({ isOpen, onClose, onTransferComplete }: Comman
                       ${selectedIndex === i ? 'bg-[#f1f2f4]' : 'hover:bg-[#fafbfb]'}
                     `}
                   >
-                    <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-[#f1f2f4] flex items-center justify-center text-xl">
-                      {action.icon}
+                    <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-[#f1f2f4] flex items-center justify-center text-[#5c5c5c]">
+                      {CmdIcons[action.icon]}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-[#1a1a1a] font-medium">{action.label}</p>
@@ -549,8 +638,8 @@ export default function CommandK({ isOpen, onClose, onTransferComplete }: Comman
                       </div>
 
                       {/* Product Image */}
-                      <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-[#f1f2f4] flex items-center justify-center text-xl">
-                        {product.image}
+                      <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-[#f1f2f4] flex items-center justify-center text-[#5c5c5c]">
+                        {CmdIcons[product.icon]}
                       </div>
 
                       {/* Product Info */}
@@ -586,7 +675,7 @@ export default function CommandK({ isOpen, onClose, onTransferComplete }: Comman
                       ${selectedIndex === i ? 'bg-[#f1f2f4]' : 'hover:bg-[#fafbfb]'}
                     `}
                   >
-                    <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-[#f1f2f4] flex items-center justify-center text-xl">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-[#f1f2f4] flex items-center justify-center text-[#5c5c5c]">
                       {getLocationIcon(location.type)}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -624,8 +713,8 @@ export default function CommandK({ isOpen, onClose, onTransferComplete }: Comman
                     className="flex items-center gap-3 px-4 py-3"
                   >
                     {/* Product Image */}
-                    <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-[#f1f2f4] flex items-center justify-center text-xl">
-                      {product.image}
+                    <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-[#f1f2f4] flex items-center justify-center text-[#5c5c5c]">
+                      {CmdIcons[product.icon]}
                     </div>
 
                     {/* Product Info */}
@@ -677,8 +766,8 @@ export default function CommandK({ isOpen, onClose, onTransferComplete }: Comman
                 <h3 className="text-[#1a1a1a] font-semibold mb-4 text-lg">Transfer Summary</h3>
                 <div className="space-y-3 text-sm">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-[#e3f1df] flex items-center justify-center">
-                      <span className="text-sm">{tags.find(t => t.type === 'action')?.icon}</span>
+                    <div className="w-8 h-8 rounded-lg bg-[#e3f1df] flex items-center justify-center text-[#1a5d1a]">
+                      {tags.find(t => t.type === 'action')?.icon && CmdIcons[tags.find(t => t.type === 'action')?.icon as keyof typeof CmdIcons]}
                     </div>
                     <div>
                       <p className="text-[#6d7175] text-xs uppercase tracking-wide">Action</p>
@@ -687,8 +776,8 @@ export default function CommandK({ isOpen, onClose, onTransferComplete }: Comman
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-[#e0f0ff] flex items-center justify-center">
-                      <span className="text-sm">📍</span>
+                    <div className="w-8 h-8 rounded-lg bg-[#e0f0ff] flex items-center justify-center text-[#0055a6]">
+                      {CmdIcons.location}
                     </div>
                     <div>
                       <p className="text-[#6d7175] text-xs uppercase tracking-wide">Destination</p>
@@ -705,7 +794,7 @@ export default function CommandK({ isOpen, onClose, onTransferComplete }: Comman
                         return (
                           <div key={i} className="flex items-center justify-between py-1">
                             <div className="flex items-center gap-2">
-                              <span className="text-base">{product?.image}</span>
+                              <span className="text-[#5c5c5c]">{product?.icon && CmdIcons[product.icon]}</span>
                               <span className="text-[#1a1a1a] font-medium">{tag.label}</span>
                             </div>
                             <span className="px-2 py-1 bg-[#fff5e6] text-[#8a6116] rounded text-sm font-medium">
