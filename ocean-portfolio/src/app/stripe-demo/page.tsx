@@ -243,24 +243,29 @@ const INITIAL_MOVEMENTS: Movement[] = [
 
 function ShopifyHeader({ onSearchClick }: { onSearchClick: () => void }) {
   return (
-    <header className="h-14 bg-[#1a1a1a] flex items-center px-3 justify-between font-[var(--font-inter)]">
-      <div className="flex items-center">
+    <header className="h-14 bg-[#1a1a1a] flex items-center px-3 font-[var(--font-inter)]">
+      {/* Left section - fixed width to balance right section */}
+      <div className="flex items-center w-[180px]">
         <ShopifyLogo />
       </div>
 
-      <button
-        onClick={onSearchClick}
-        className="flex items-center gap-3 bg-[#303030] hover:bg-[#404040] rounded-lg px-3 py-[6px] transition-colors w-[600px] mx-4"
-      >
-        <span className="text-[#b5b5b5]">{Icons.search}</span>
-        <span className="text-[#b5b5b5] text-sm flex-1 text-left">Search</span>
-        <div className="flex items-center gap-0.5">
-          <kbd className="px-1.5 py-0.5 text-[11px] font-medium text-[#b5b5b5] bg-[#404040] rounded border border-[#505050]">⌘</kbd>
-          <kbd className="px-1.5 py-0.5 text-[11px] font-medium text-[#b5b5b5] bg-[#404040] rounded border border-[#505050]">K</kbd>
-        </div>
-      </button>
+      {/* Center section - search bar */}
+      <div className="flex-1 flex justify-center">
+        <button
+          onClick={onSearchClick}
+          className="flex items-center gap-3 bg-[#303030] hover:bg-[#404040] rounded-lg px-3 py-[6px] transition-colors w-[600px]"
+        >
+          <span className="text-[#b5b5b5]">{Icons.search}</span>
+          <span className="text-[#b5b5b5] text-sm flex-1 text-left">Search</span>
+          <div className="flex items-center gap-0.5">
+            <kbd className="px-1.5 py-0.5 text-[11px] font-medium text-[#b5b5b5] bg-[#404040] rounded border border-[#505050]">⌘</kbd>
+            <kbd className="px-1.5 py-0.5 text-[11px] font-medium text-[#b5b5b5] bg-[#404040] rounded border border-[#505050]">K</kbd>
+          </div>
+        </button>
+      </div>
 
-      <div className="flex items-center gap-2">
+      {/* Right section - fixed width to balance left section */}
+      <div className="flex items-center gap-2 w-[180px] justify-end">
         <button className="p-2 text-[#b5b5b5] hover:text-white hover:bg-[#333] rounded-lg transition-colors relative">
           {Icons.notification}
           <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#e53935] rounded-full border border-[#1a1a1a]" />
@@ -379,11 +384,186 @@ function Sidebar({ currentPage, onNavigate }: { currentPage: Page; onNavigate: (
   )
 }
 
-function InventoryPage() {
+// Mini sparkline chart component with smooth curves
+function MiniChart({ data, color = '#2563eb' }: { data: number[]; color?: string }) {
+  const max = Math.max(...data)
+  const min = Math.min(...data)
+  const range = max - min || 1
+  const height = 36
+  const width = 72
+  const padding = 2
+
+  // Generate points with padding
+  const points = data.map((v, i) => ({
+    x: padding + (i / (data.length - 1)) * (width - padding * 2),
+    y: padding + (height - padding * 2) - ((v - min) / range) * (height - padding * 2)
+  }))
+
+  // Create smooth bezier curve path
+  const createSmoothPath = (pts: { x: number; y: number }[]) => {
+    if (pts.length < 2) return ''
+
+    let path = `M ${pts[0].x} ${pts[0].y}`
+
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p0 = pts[Math.max(0, i - 1)]
+      const p1 = pts[i]
+      const p2 = pts[i + 1]
+      const p3 = pts[Math.min(pts.length - 1, i + 2)]
+
+      // Calculate control points using Catmull-Rom to Bezier conversion
+      const tension = 0.3
+      const cp1x = p1.x + (p2.x - p0.x) * tension
+      const cp1y = p1.y + (p2.y - p0.y) * tension
+      const cp2x = p2.x - (p3.x - p1.x) * tension
+      const cp2y = p2.y - (p3.y - p1.y) * tension
+
+      path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`
+    }
+
+    return path
+  }
+
+  const linePath = createSmoothPath(points)
+
+  // Create gradient fill path
+  const fillPath = linePath + ` L ${points[points.length - 1].x} ${height} L ${points[0].x} ${height} Z`
+
+  return (
+    <svg viewBox={`0 0 ${width} ${height}`} className="w-[72px] h-9">
+      <defs>
+        <linearGradient id={`gradient-${color.replace('#', '')}`} x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor={color} stopOpacity="0.15" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path
+        d={fillPath}
+        fill={`url(#gradient-${color.replace('#', '')})`}
+      />
+      <path
+        d={linePath}
+        fill="none"
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      {/* End dot */}
+      <circle
+        cx={points[points.length - 1].x}
+        cy={points[points.length - 1].y}
+        r="2.5"
+        fill={color}
+      />
+    </svg>
+  )
+}
+
+// Analytics card component
+function AnalyticsCard({
+  title,
+  value,
+  change,
+  changeLabel,
+  chartData,
+  chartColor,
+}: {
+  title: string
+  value: string
+  change: string
+  changeLabel: string
+  chartData: number[]
+  chartColor: string
+}) {
+  const isPositive = change.startsWith('+') || !change.startsWith('-')
+  return (
+    <div className="bg-white rounded-xl border border-[#e3e3e3] p-4 shadow-sm">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-[12px] font-medium text-[#6d6d6d] uppercase tracking-wide">{title}</p>
+          <p className="text-[24px] font-semibold text-[#303030] mt-1">{value}</p>
+          <div className="flex items-center gap-1.5 mt-1">
+            <span className={`text-[12px] font-medium ${isPositive ? 'text-[#1a7f37]' : 'text-[#cf222e]'}`}>
+              {change}
+            </span>
+            <span className="text-[12px] text-[#6d6d6d]">{changeLabel}</span>
+          </div>
+        </div>
+        <MiniChart data={chartData} color={chartColor} />
+      </div>
+    </div>
+  )
+}
+
+function InventoryPage({
+  onNavigate,
+  onCreateMovement
+}: {
+  onNavigate: (page: Page) => void
+  onCreateMovement: () => void
+}) {
+  // AI suggestions data
+  const aiSuggestions = [
+    {
+      id: 1,
+      type: 'restock',
+      title: 'Low stock alert',
+      description: 'Trekker Boots (Brown/10) has only 7 units available. Consider restocking.',
+      action: 'Create purchase order',
+      icon: (
+        <svg viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-[#b86800]">
+          <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625l6.28-10.875ZM10 6a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 6Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/>
+        </svg>
+      ),
+      bgColor: 'bg-[#fff8eb]',
+      borderColor: 'border-[#ffd699]',
+    },
+    {
+      id: 2,
+      type: 'transfer',
+      title: 'Stock imbalance detected',
+      description: 'Downtown Flagship is low on Summit Base Layers. Main Warehouse has 45 units.',
+      action: 'Create movement',
+      icon: (
+        <svg viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-[#005bd3]">
+          <path d="M3.75 4a.75.75 0 0 1 .75.75v4.5h6.69l-1.72-1.72a.75.75 0 0 1 1.06-1.06l3 3a.75.75 0 0 1 0 1.06l-3 3a.75.75 0 1 1-1.06-1.06l1.72-1.72h-6.69v4.5a.75.75 0 0 1-1.5 0v-10.5a.75.75 0 0 1 .75-.75Z"/>
+          <path d="M16.25 4a.75.75 0 0 1 .75.75v10.5a.75.75 0 0 1-1.5 0v-10.5a.75.75 0 0 1 .75-.75Z"/>
+        </svg>
+      ),
+      bgColor: 'bg-[#f0f7ff]',
+      borderColor: 'border-[#b4d5ff]',
+    },
+    {
+      id: 3,
+      type: 'optimize',
+      title: 'Slow-moving inventory',
+      description: 'Trail Caps have low turnover. Consider running a promotion or redistributing stock.',
+      action: 'View analytics',
+      icon: (
+        <svg viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-[#6d6d6d]">
+          <path d="M9.971 4c-.204 0-.344 0-.465.024a1.25 1.25 0 0 0-.982.982c-.024.121-.024.26-.024.465v9.058c0 .204 0 .344.024.465.099.496.486.883.982.982a2.5 2.5 0 0 0 .465.024h.058c.204 0 .344 0 .465-.024a1.25 1.25 0 0 0 .982-.982a2.5 2.5 0 0 0 .024-.465v-9.058c0-.204 0-.344-.024-.465a1.25 1.25 0 0 0-.982-.982a2.504 2.504 0 0 0-.465-.024h-.058Z"/>
+          <path d="M5.471 9.5c-.204 0-.344 0-.465.024a1.25 1.25 0 0 0-.982.982c-.024.121-.024.26-.024.465v3.558c0 .204 0 .344.024.465.099.496.486.883.982.982a2.5 2.5 0 0 0 .465.024h.058c.204 0 .344 0 .465-.024a1.25 1.25 0 0 0 .982-.982c.024-.121.024-.26.024-.465v-3.558c0-.204 0-.344-.024-.465a1.25 1.25 0 0 0-.982-.982a2.503 2.503 0 0 0-.465-.024h-.058Z"/>
+          <path d="M14.471 6.5c-.204 0-.344 0-.465.024a1.25 1.25 0 0 0-.982.982c-.024.121-.024.26-.024.465v6.558c0 .204 0 .344.024.465.099.496.486.883.982.982.121.024.26.024.465.024h.058c.204 0 .344 0 .465-.024a1.25 1.25 0 0 0 .982-.982c.024-.121.024-.26.024-.465v-6.558c0-.204 0-.344-.024-.465a1.25 1.25 0 0 0-.982-.982a2.504 2.504 0 0 0-.465-.024h-.058Z"/>
+        </svg>
+      ),
+      bgColor: 'bg-[#f6f6f7]',
+      borderColor: 'border-[#e3e3e3]',
+    },
+  ]
+
+  // Recent movements for the summary
+  const recentMovements = [
+    { id: 'M0001', destination: 'Downtown Flagship', items: 5, status: 'Pending', date: 'Dec 3' },
+    { id: 'M0002', destination: 'Westfield Mall', items: 12, status: 'Received', date: 'Dec 1' },
+    { id: 'M0003', destination: 'Factory Outlet', items: 8, status: 'Received', date: 'Nov 28' },
+  ]
+
   return (
     <div className="flex-1 overflow-auto bg-[#f1f1f1] font-[var(--font-inter)]">
+      {/* Header */}
       <div className="bg-white border-b border-[#e3e3e3]">
-        <div className="flex items-center justify-between px-5 py-4">
+        <div className="max-w-[1200px] mx-auto flex items-center justify-between px-6 py-4">
           <div className="flex items-center gap-2">
             <span className="text-[#303030]">{Icons.inventory}</span>
             <h1 className="text-[20px] font-semibold text-[#303030]">Inventory</h1>
@@ -399,79 +579,232 @@ function InventoryPage() {
         </div>
       </div>
 
-      <div className="p-5">
-        <div className="bg-white rounded-xl border border-[#e3e3e3] shadow-sm overflow-hidden">
-          <div className="flex items-center gap-2 px-4 py-3 border-b border-[#e3e3e3]">
-            <button className="px-3 py-[5px] text-[13px] font-medium bg-[#303030] text-white rounded-lg">All</button>
-            <button className="p-1.5 text-[#5c5c5c] hover:bg-[#f1f1f1] rounded-lg transition-colors">
-              {Icons.plus}
+      <div className="max-w-[1200px] mx-auto p-6 space-y-6">
+        {/* Quick Workflows */}
+        <div className="bg-white rounded-xl border border-[#e3e3e3] px-4 py-3 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={onCreateMovement}
+                className="flex items-center gap-2 px-3.5 py-2 bg-[#303030] text-white rounded-lg hover:bg-[#404040] transition-colors"
+              >
+                <span className="text-white">{Icons.transfer}</span>
+                <span className="text-[13px] font-medium">Create movement</span>
+              </button>
+              <button className="flex items-center gap-2 px-3.5 py-2 border border-[#c9cccf] rounded-lg hover:bg-[#f6f6f7] transition-colors">
+                <svg viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-[#303030]">
+                  <path fillRule="evenodd" d="M10 3a.75.75 0 0 1 .75.75V9h5.25a.75.75 0 0 1 0 1.5h-5.25v5.25a.75.75 0 0 1-1.5 0v-5.25h-5.25a.75.75 0 0 1 0-1.5h5.25v-5.25A.75.75 0 0 1 10 3Z"/>
+                </svg>
+                <span className="text-[13px] font-medium text-[#303030]">Purchase order</span>
+              </button>
+              <button className="flex items-center gap-2 px-3.5 py-2 border border-[#c9cccf] rounded-lg hover:bg-[#f6f6f7] transition-colors">
+                <svg viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-[#303030]">
+                  <path d="M4.75 4a.75.75 0 0 0-.75.75v10.5c0 .414.336.75.75.75h3.5a.75.75 0 0 0 0-1.5h-2.75v-9h5.94l2.56 2.56v6.44h-2.25a.75.75 0 0 0 0 1.5h3a.75.75 0 0 0 .75-.75v-7.69a.75.75 0 0 0-.22-.53l-3.31-3.31a.75.75 0 0 0-.53-.22h-6.69Z"/>
+                  <path d="M10.22 12.72a.75.75 0 0 1 1.06 0l1.97 1.97 1.97-1.97a.75.75 0 1 1 1.06 1.06l-2.5 2.5a.75.75 0 0 1-1.06 0l-2.5-2.5a.75.75 0 0 1 0-1.06Z"/>
+                  <path d="M13.25 9.5a.75.75 0 0 1 .75.75v6a.75.75 0 0 1-1.5 0v-6a.75.75 0 0 1 .75-.75Z"/>
+                </svg>
+                <span className="text-[13px] font-medium text-[#303030]">Receive inventory</span>
+              </button>
+              <button className="flex items-center gap-2 px-3.5 py-2 border border-[#c9cccf] rounded-lg hover:bg-[#f6f6f7] transition-colors">
+                <svg viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-[#303030]">
+                  <path fillRule="evenodd" d="M5.75 2a.75.75 0 0 1 .75.75v1.5a2.25 2.25 0 0 0 4.5 0v-1.5a.75.75 0 0 1 1.5 0v1.5a3.75 3.75 0 0 1-7.5 0v-1.5a.75.75 0 0 1 .75-.75ZM10 9.25a.75.75 0 0 1 .75.75v5.19l1.72-1.72a.75.75 0 1 1 1.06 1.06l-3 3a.75.75 0 0 1-1.06 0l-3-3a.75.75 0 1 1 1.06-1.06l1.72 1.72v-5.19a.75.75 0 0 1 .75-.75Z"/>
+                </svg>
+                <span className="text-[13px] font-medium text-[#303030]">Adjust quantities</span>
+              </button>
+            </div>
+            <button className="flex items-center gap-1.5 px-3 py-2 text-[#6d6d6d] hover:text-[#303030] hover:bg-[#f6f6f7] rounded-lg transition-colors">
+              <svg viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                <path fillRule="evenodd" d="M10 3a.75.75 0 0 1 .75.75V9h5.25a.75.75 0 0 1 0 1.5h-5.25v5.25a.75.75 0 0 1-1.5 0v-5.25h-5.25a.75.75 0 0 1 0-1.5h5.25v-5.25A.75.75 0 0 1 10 3Z"/>
+              </svg>
+              <span className="text-[12px] font-medium">Custom workflow</span>
             </button>
           </div>
+        </div>
 
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-[#e3e3e3] bg-[#fafafa]">
-                <th className="px-4 py-2 w-10">
-                  <input type="checkbox" className="w-[18px] h-[18px] rounded border-[#8a8a8a] accent-[#303030]" />
-                </th>
-                <th className="px-3 py-2 text-[12px] font-medium text-[#6d6d6d] text-left">
-                  <div className="flex items-center gap-1">
-                    Product
-                    <span className="text-[#8a8a8a]">{Icons.sortAsc}</span>
-                  </div>
-                </th>
-                <th className="px-3 py-2 text-[12px] font-medium text-[#6d6d6d] text-left">SKU</th>
-                <th className="px-3 py-2 text-[12px] font-medium text-[#6d6d6d] text-left">Unavailable</th>
-                <th className="px-3 py-2 text-[12px] font-medium text-[#6d6d6d] text-left">Committed</th>
-                <th className="px-3 py-2 text-[12px] font-medium text-[#6d6d6d] text-left">Available</th>
-                <th className="px-3 py-2 text-[12px] font-medium text-[#6d6d6d] text-left">On hand</th>
-              </tr>
-            </thead>
-            <tbody>
-              {INVENTORY_ITEMS.map((item) => (
-                <tr key={item.id} className="border-b border-[#e3e3e3] hover:bg-[#fafafa] transition-colors">
-                  <td className="px-4 py-2">
-                    <input type="checkbox" className="w-[18px] h-[18px] rounded border-[#8a8a8a] accent-[#303030]" />
-                  </td>
-                  <td className="px-3 py-2">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-[#f1f1f1] rounded-lg flex items-center justify-center text-[#5c5c5c] border border-[#e3e3e3]">
-                        {Icons[item.icon]}
-                      </div>
-                      <div>
-                        <p className="text-[13px] font-medium text-[#303030]">{item.name}</p>
-                        <span className="inline-block px-[6px] py-[2px] bg-[#e3e3e3] text-[#5c5c5c] text-[11px] rounded mt-0.5">
-                          {item.variant}
-                        </span>
-                      </div>
+        {/* Analytics Grid */}
+        <div className="grid grid-cols-4 gap-4">
+          <AnalyticsCard
+            title="Total inventory value"
+            value="$127,450"
+            change="+12.3%"
+            changeLabel="vs last month"
+            chartData={[45, 52, 48, 61, 58, 72, 68, 82]}
+            chartColor="#2563eb"
+          />
+          <AnalyticsCard
+            title="Units in stock"
+            value="612"
+            change="+8.2%"
+            changeLabel="vs last month"
+            chartData={[520, 545, 530, 560, 575, 590, 598, 612]}
+            chartColor="#16a34a"
+          />
+          <AnalyticsCard
+            title="Movements this week"
+            value="3"
+            change="+2"
+            changeLabel="vs last week"
+            chartData={[1, 2, 1, 3, 2, 4, 2, 3]}
+            chartColor="#7c3aed"
+          />
+          <AnalyticsCard
+            title="Low stock items"
+            value="2"
+            change="-1"
+            changeLabel="vs last week"
+            chartData={[5, 4, 6, 4, 3, 4, 3, 2]}
+            chartColor="#dc2626"
+          />
+        </div>
+
+        {/* Two Column Layout: Movements + AI Suggestions */}
+        <div className="grid grid-cols-2 gap-4">
+          {/* Recent Movements */}
+          <div className="bg-white rounded-xl border border-[#e3e3e3] shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-[#e3e3e3]">
+              <h2 className="text-[14px] font-semibold text-[#303030]">Recent movements</h2>
+              <button
+                onClick={() => onNavigate('movements')}
+                className="text-[13px] text-[#005bd3] hover:underline"
+              >
+                View all
+              </button>
+            </div>
+            <div className="divide-y divide-[#e3e3e3]">
+              {recentMovements.map((movement) => (
+                <div key={movement.id} className="px-4 py-3 flex items-center justify-between hover:bg-[#f6f6f7] transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-[#f1f1f1] rounded-lg flex items-center justify-center text-[#5c5c5c]">
+                      {Icons.transfer}
                     </div>
-                  </td>
-                  <td className="px-3 py-2 text-[13px] text-[#6d6d6d] font-mono">{item.sku}</td>
-                  <td className="px-3 py-2 text-[13px] text-[#6d6d6d]">{item.unavailable}</td>
-                  <td className="px-3 py-2 text-[13px] text-[#6d6d6d]">{item.committed}</td>
-                  <td className="px-3 py-2">
-                    <input
-                      type="number"
-                      value={item.available}
-                      readOnly
-                      className="w-16 px-2 py-1 text-[13px] border border-[#c9cccf] rounded-lg text-[#303030] bg-white focus:outline-none focus:border-[#5c5ac7] focus:ring-1 focus:ring-[#5c5ac7]"
-                    />
-                  </td>
-                  <td className="px-3 py-2">
-                    <input
-                      type="number"
-                      value={item.onHand}
-                      readOnly
-                      className="w-16 px-2 py-1 text-[13px] border border-[#c9cccf] rounded-lg text-[#303030] bg-white focus:outline-none focus:border-[#5c5ac7] focus:ring-1 focus:ring-[#5c5ac7]"
-                    />
-                  </td>
-                </tr>
+                    <div>
+                      <p className="text-[13px] font-medium text-[#303030]">{movement.destination}</p>
+                      <p className="text-[12px] text-[#6d6d6d]">{movement.items} items · {movement.date}</p>
+                    </div>
+                  </div>
+                  <span className={`px-2 py-0.5 text-[11px] font-medium rounded-full ${
+                    movement.status === 'Pending'
+                      ? 'bg-[#fff8eb] text-[#916a00]'
+                      : 'bg-[#e3f1e6] text-[#1a7f37]'
+                  }`}>
+                    {movement.status}
+                  </span>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+          </div>
 
-          <div className="px-4 py-3 text-center border-t border-[#e3e3e3]">
-            <a href="#" className="text-[13px] text-[#005bd3] hover:underline">Learn more about managing inventory</a>
+          {/* AI Suggestions */}
+          <div className="bg-white rounded-xl border border-[#e3e3e3] shadow-sm overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-3 border-b border-[#e3e3e3]">
+              <svg viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-[#7c3aed]">
+                <path d="M10 1l2.39 5.16L18 7.27l-4 4.15.94 5.88L10 14.77l-4.94 2.53.94-5.88-4-4.15 5.61-1.11L10 1Z"/>
+              </svg>
+              <h2 className="text-[14px] font-semibold text-[#303030]">Suggested actions</h2>
+            </div>
+            <div className="divide-y divide-[#e3e3e3]">
+              {aiSuggestions.map((suggestion) => (
+                <div key={suggestion.id} className="px-4 py-3">
+                  <div className="flex items-start gap-3">
+                    <div className={`w-8 h-8 ${suggestion.bgColor} rounded-lg flex items-center justify-center flex-shrink-0`}>
+                      {suggestion.icon}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-medium text-[#303030]">{suggestion.title}</p>
+                      <p className="text-[12px] text-[#6d6d6d] mt-0.5 line-clamp-2">{suggestion.description}</p>
+                      <button className="mt-2 text-[12px] text-[#005bd3] hover:underline font-medium">
+                        {suggestion.action} →
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Inventory Table */}
+        <div className="bg-white rounded-xl border border-[#e3e3e3] shadow-sm overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-[#e3e3e3]">
+            <div className="flex items-center gap-2">
+              <h2 className="text-[14px] font-semibold text-[#303030]">All products</h2>
+              <span className="text-[12px] text-[#6d6d6d] bg-[#f1f1f1] px-2 py-0.5 rounded-full">{INVENTORY_ITEMS.length} items</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button className="px-3 py-[5px] text-[13px] font-medium bg-[#303030] text-white rounded-lg">All</button>
+              <button className="p-1.5 text-[#5c5c5c] hover:bg-[#f1f1f1] rounded-lg transition-colors">
+                {Icons.plus}
+              </button>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-[#e3e3e3] bg-[#fafafa]">
+                  <th className="px-4 py-2 w-10">
+                    <input type="checkbox" className="w-[18px] h-[18px] rounded border-[#8a8a8a] accent-[#303030]" />
+                  </th>
+                  <th className="px-3 py-2 text-[12px] font-medium text-[#6d6d6d] text-left">
+                    <div className="flex items-center gap-1">
+                      Product
+                      <span className="text-[#8a8a8a]">{Icons.sortAsc}</span>
+                    </div>
+                  </th>
+                  <th className="px-3 py-2 text-[12px] font-medium text-[#6d6d6d] text-left">SKU</th>
+                  <th className="px-3 py-2 text-[12px] font-medium text-[#6d6d6d] text-left">Unavailable</th>
+                  <th className="px-3 py-2 text-[12px] font-medium text-[#6d6d6d] text-left">Committed</th>
+                  <th className="px-3 py-2 text-[12px] font-medium text-[#6d6d6d] text-left">Available</th>
+                  <th className="px-3 py-2 text-[12px] font-medium text-[#6d6d6d] text-left">On hand</th>
+                </tr>
+              </thead>
+              <tbody>
+                {INVENTORY_ITEMS.slice(0, 8).map((item) => (
+                  <tr key={item.id} className="border-b border-[#e3e3e3] hover:bg-[#fafafa] transition-colors">
+                    <td className="px-4 py-2">
+                      <input type="checkbox" className="w-[18px] h-[18px] rounded border-[#8a8a8a] accent-[#303030]" />
+                    </td>
+                    <td className="px-3 py-2">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-[#f1f1f1] rounded-lg flex items-center justify-center text-[#5c5c5c] border border-[#e3e3e3]">
+                          {Icons[item.icon]}
+                        </div>
+                        <div>
+                          <p className="text-[13px] font-medium text-[#303030]">{item.name}</p>
+                          <span className="inline-block px-[6px] py-[2px] bg-[#e3e3e3] text-[#5c5c5c] text-[11px] rounded mt-0.5">
+                            {item.variant}
+                          </span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-3 py-2 text-[13px] text-[#6d6d6d] font-mono">{item.sku}</td>
+                    <td className="px-3 py-2 text-[13px] text-[#6d6d6d]">{item.unavailable}</td>
+                    <td className="px-3 py-2 text-[13px] text-[#6d6d6d]">{item.committed}</td>
+                    <td className="px-3 py-2">
+                      <input
+                        type="number"
+                        value={item.available}
+                        readOnly
+                        className="w-16 px-2 py-1 text-[13px] border border-[#c9cccf] rounded-lg text-[#303030] bg-white focus:outline-none focus:border-[#5c5ac7] focus:ring-1 focus:ring-[#5c5ac7]"
+                      />
+                    </td>
+                    <td className="px-3 py-2">
+                      <input
+                        type="number"
+                        value={item.onHand}
+                        readOnly
+                        className="w-16 px-2 py-1 text-[13px] border border-[#c9cccf] rounded-lg text-[#303030] bg-white focus:outline-none focus:border-[#5c5ac7] focus:ring-1 focus:ring-[#5c5ac7]"
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="px-4 py-3 flex items-center justify-between border-t border-[#e3e3e3]">
+            <span className="text-[12px] text-[#6d6d6d]">Showing 8 of {INVENTORY_ITEMS.length} products</span>
+            <button className="text-[13px] text-[#005bd3] hover:underline">View all products</button>
           </div>
         </div>
       </div>
@@ -491,17 +824,41 @@ const WORKFLOW_SHORTCUTS = [
 
 function MovementsPage({
   movements,
-  onCreateMovement
+  onCreateMovement,
+  startInCreationMode = false,
+  onCreationModeConsumed,
+  shouldResetCreation = false,
+  onResetConsumed
 }: {
   movements: Movement[]
   onCreateMovement: (movement: Movement) => void
+  startInCreationMode?: boolean
+  onCreationModeConsumed?: () => void
+  shouldResetCreation?: boolean
+  onResetConsumed?: () => void
 }) {
-  const [isCreating, setIsCreating] = useState(false)
-  const [step, setStep] = useState<CreationStep>('origin')
+  // Default origin is Main Warehouse, default destination is Downtown Flagship
+  const defaultOrigin = LOCATIONS.find(l => l.id === 'warehouse')!
+  const defaultDestination = LOCATIONS.find(l => l.id === 'flagship')!
+
+  const [isCreating, setIsCreating] = useState(startInCreationMode)
+
+  // Handle starting in creation mode from external navigation
+  useEffect(() => {
+    if (startInCreationMode && !isCreating) {
+      setIsCreating(true)
+    }
+    if (startInCreationMode && onCreationModeConsumed) {
+      onCreationModeConsumed()
+    }
+  }, [startInCreationMode, isCreating, onCreationModeConsumed])
+
+  // Start on products step with defaults pre-selected
+  const [step, setStep] = useState<CreationStep>('products')
   const [searchInput, setSearchInput] = useState('')
   const [selectedProducts, setSelectedProducts] = useState<Array<{ item: typeof INVENTORY_ITEMS[0]; quantity: number }>>([])
-  const [selectedOrigin, setSelectedOrigin] = useState<typeof LOCATIONS[0] | null>(null)
-  const [selectedDestination, setSelectedDestination] = useState<typeof LOCATIONS[0] | null>(null)
+  const [selectedOrigin, setSelectedOrigin] = useState<typeof LOCATIONS[0] | null>(defaultOrigin)
+  const [selectedDestination, setSelectedDestination] = useState<typeof LOCATIONS[0] | null>(defaultDestination)
   const [highlightedIndex, setHighlightedIndex] = useState(0)
   const [pendingProduct, setPendingProduct] = useState<typeof INVENTORY_ITEMS[0] | null>(null)
   const [quantityInput, setQuantityInput] = useState('')
@@ -509,6 +866,24 @@ function MovementsPage({
   const [destinationDropdownOpen, setDestinationDropdownOpen] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const quantityInputRef = useRef<HTMLInputElement>(null)
+
+  // Handle reset from sidebar navigation
+  useEffect(() => {
+    if (shouldResetCreation && isCreating) {
+      setIsCreating(false)
+      setStep('products')
+      setSelectedProducts([])
+      setSelectedOrigin(defaultOrigin)
+      setSelectedDestination(defaultDestination)
+      setSearchInput('')
+      setHighlightedIndex(0)
+      setPendingProduct(null)
+      setQuantityInput('')
+    }
+    if (shouldResetCreation && onResetConsumed) {
+      onResetConsumed()
+    }
+  }, [shouldResetCreation, isCreating, onResetConsumed, defaultOrigin, defaultDestination])
 
   // Auto-focus input when creating or step changes
   useEffect(() => {
@@ -566,10 +941,10 @@ function MovementsPage({
 
   const resetForm = () => {
     setIsCreating(false)
-    setStep('origin')
+    setStep('products')
     setSelectedProducts([])
-    setSelectedOrigin(null)
-    setSelectedDestination(null)
+    setSelectedOrigin(defaultOrigin)
+    setSelectedDestination(defaultDestination)
     setSearchInput('')
     setHighlightedIndex(0)
     setPendingProduct(null)
@@ -679,12 +1054,13 @@ function MovementsPage({
       )
     }
     if (step === 'products') {
-      return INVENTORY_ITEMS.filter(item =>
-        !search ||
-        item.name.toLowerCase().includes(search) ||
-        item.variant.toLowerCase().includes(search) ||
-        item.sku.toLowerCase().includes(search)
-      )
+      return INVENTORY_ITEMS.filter(item => {
+        if (!search) return true
+        // Split search into words and check if ALL words match across name, variant, or sku
+        const searchWords = search.split(/\s+/).filter(w => w.length > 0)
+        const searchableText = `${item.name} ${item.variant} ${item.sku}`.toLowerCase()
+        return searchWords.every(word => searchableText.includes(word))
+      })
     }
     return []
   }
@@ -805,10 +1181,13 @@ function MovementsPage({
     <div className="flex-1 overflow-auto bg-[#f1f1f1] font-[var(--font-inter)]">
       <div className="bg-white border-b border-[#e3e3e3]">
         <div className="flex items-center justify-between px-5 py-4">
-          <div className="flex items-center gap-2">
+          <button
+            onClick={() => { if (isCreating) resetForm() }}
+            className="flex items-center gap-2 hover:opacity-70 transition-opacity"
+          >
             <span className="text-[#303030]">{Icons.transfer}</span>
             <h1 className="text-[20px] font-semibold text-[#303030]">Movements</h1>
-          </div>
+          </button>
           {!isCreating && (
             <button
               onClick={() => setIsCreating(true)}
@@ -823,7 +1202,7 @@ function MovementsPage({
       <div className="p-5">
         <AnimatePresence mode="wait">
           {isCreating ? (
-            <div className="max-w-[780px] mx-auto">
+            <div className="max-w-[880px] mx-auto">
               <motion.div
                 key="create"
                 initial={{ opacity: 0, y: -8 }}
@@ -834,106 +1213,132 @@ function MovementsPage({
               >
                 {/* Command bar header */}
                 <div className="relative">
-                  {/* Route breadcrumb - pill dropdowns for hot-swapping */}
-                  {(selectedOrigin || selectedDestination) && (
-                    <div className="px-5 pt-4 pb-1">
-                      <div className="inline-flex items-center gap-1 px-1 py-0.5 bg-[#f6f6f7] rounded-full">
-                        {selectedOrigin && (
-                          <div className="relative">
-                            <button
-                              onClick={() => { setOriginDropdownOpen(!originDropdownOpen); setDestinationDropdownOpen(false) }}
-                              className={`flex items-center gap-1.5 pl-1 pr-2 py-1 bg-white rounded-full shadow-sm text-[12px] font-medium text-[#202223] hover:shadow-md transition-all ${originDropdownOpen ? 'ring-2 ring-[#8c9196]' : ''}`}
-                            >
-                              <span className="w-5 h-5 rounded-full bg-[#f6f6f7] flex items-center justify-center">
-                                <span className="text-[#5c5c5c] scale-[0.7]">{Icons.inventory}</span>
-                              </span>
-                              {selectedOrigin.name.split(' ')[0]}
-                              <svg className={`w-3 h-3 text-[#8c9196] transition-transform ${originDropdownOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                              </svg>
-                            </button>
-                            {/* Origin dropdown */}
-                            {originDropdownOpen && (
-                              <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-[#e4e5e7] py-1 z-10">
-                                {LOCATIONS.filter(loc => loc.id !== selectedDestination?.id).map(loc => (
-                                  <button
-                                    key={loc.id}
-                                    onClick={() => { setSelectedOrigin(loc); setOriginDropdownOpen(false) }}
-                                    className={`w-full flex items-center gap-2 px-3 py-2 text-left text-[13px] hover:bg-[#f6f6f7] transition-colors ${
-                                      selectedOrigin.id === loc.id ? 'bg-[#f2f3f5]' : ''
-                                    }`}
-                                  >
-                                    <span className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                                      loc.type === 'warehouse' ? 'bg-[#f6f6f7]' : 'bg-[#e3f1df]'
-                                    }`}>
-                                      <span className={`scale-[0.65] ${loc.type === 'warehouse' ? 'text-[#5c5c5c]' : 'text-[#1a7f37]'}`}>
-                                        {loc.type === 'warehouse' ? Icons.inventory : Icons.store}
-                                      </span>
+                  {/* Header row with route pills and quick actions */}
+                  <div className="px-5 pt-4 pb-2 flex items-center justify-between">
+                    {/* Route breadcrumb - larger rounded chip dropdowns */}
+                    <div className="inline-flex items-center gap-2 px-2 py-1.5 bg-[#f6f6f7] rounded-full">
+                      {selectedOrigin && (
+                        <div className="relative">
+                          <button
+                            onClick={() => { setOriginDropdownOpen(!originDropdownOpen); setDestinationDropdownOpen(false) }}
+                            className={`flex items-center gap-2 pl-2.5 pr-3.5 py-2 bg-white rounded-full shadow-sm text-[14px] font-medium text-[#202223] hover:shadow-md transition-all ${originDropdownOpen ? 'ring-2 ring-[#8c9196]' : ''}`}
+                          >
+                            <span className="w-7 h-7 rounded-full bg-[#f6f6f7] flex items-center justify-center">
+                              <span className="text-[#5c5c5c] scale-[0.85]">{Icons.inventory}</span>
+                            </span>
+                            {selectedOrigin.name.split(' ')[0]}
+                            <svg className={`w-4 h-4 text-[#8c9196] transition-transform ${originDropdownOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </button>
+                          {/* Origin dropdown */}
+                          {originDropdownOpen && (
+                            <div className="absolute top-full left-0 mt-1 w-52 bg-white rounded-xl shadow-lg border border-[#e4e5e7] py-1.5 z-10">
+                              {LOCATIONS.filter(loc => loc.id !== selectedDestination?.id).map(loc => (
+                                <button
+                                  key={loc.id}
+                                  onClick={() => { setSelectedOrigin(loc); setOriginDropdownOpen(false) }}
+                                  className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-[13px] hover:bg-[#f6f6f7] transition-colors ${
+                                    selectedOrigin.id === loc.id ? 'bg-[#f2f3f5]' : ''
+                                  }`}
+                                >
+                                  <span className={`w-7 h-7 rounded-full flex items-center justify-center ${
+                                    loc.type === 'warehouse' ? 'bg-[#f6f6f7]' : 'bg-[#e3f1df]'
+                                  }`}>
+                                    <span className={`scale-[0.7] ${loc.type === 'warehouse' ? 'text-[#5c5c5c]' : 'text-[#1a7f37]'}`}>
+                                      {loc.type === 'warehouse' ? Icons.inventory : Icons.store}
                                     </span>
-                                    <span className="text-[#202223]">{loc.name}</span>
-                                    {selectedOrigin.id === loc.id && (
-                                      <svg className="w-4 h-4 text-[#1a7f37] ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                      </svg>
-                                    )}
-                                  </button>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                        {selectedOrigin && selectedDestination && (
-                          <svg className="w-4 h-4 text-[#8c9196]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                          </svg>
-                        )}
-                        {selectedDestination && (
-                          <div className="relative">
-                            <button
-                              onClick={() => { setDestinationDropdownOpen(!destinationDropdownOpen); setOriginDropdownOpen(false) }}
-                              className={`flex items-center gap-1.5 pl-1 pr-2 py-1 bg-white rounded-full shadow-sm text-[12px] font-medium text-[#202223] hover:shadow-md transition-all ${destinationDropdownOpen ? 'ring-2 ring-[#8c9196]' : ''}`}
-                            >
-                              <span className="w-5 h-5 rounded-full bg-[#e3f1df] flex items-center justify-center">
-                                <span className="text-[#1a7f37] scale-[0.7]">{Icons.store}</span>
-                              </span>
-                              {selectedDestination.name.split(' ')[0]}
-                              <svg className={`w-3 h-3 text-[#8c9196] transition-transform ${destinationDropdownOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                              </svg>
-                            </button>
-                            {/* Destination dropdown */}
-                            {destinationDropdownOpen && (
-                              <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-[#e4e5e7] py-1 z-10">
-                                {LOCATIONS.filter(loc => loc.id !== selectedOrigin?.id).map(loc => (
-                                  <button
-                                    key={loc.id}
-                                    onClick={() => { setSelectedDestination(loc); setDestinationDropdownOpen(false) }}
-                                    className={`w-full flex items-center gap-2 px-3 py-2 text-left text-[13px] hover:bg-[#f6f6f7] transition-colors ${
-                                      selectedDestination.id === loc.id ? 'bg-[#f2f3f5]' : ''
-                                    }`}
-                                  >
-                                    <span className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                                      loc.type === 'warehouse' ? 'bg-[#f6f6f7]' : 'bg-[#e3f1df]'
-                                    }`}>
-                                      <span className={`scale-[0.65] ${loc.type === 'warehouse' ? 'text-[#5c5c5c]' : 'text-[#1a7f37]'}`}>
-                                        {loc.type === 'warehouse' ? Icons.inventory : Icons.store}
-                                      </span>
+                                  </span>
+                                  <span className="text-[#202223]">{loc.name}</span>
+                                  {selectedOrigin.id === loc.id && (
+                                    <svg className="w-4 h-4 text-[#1a7f37] ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                  )}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {selectedOrigin && selectedDestination && (
+                        <svg className="w-5 h-5 text-[#8c9196]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
+                      )}
+                      {selectedDestination && (
+                        <div className="relative">
+                          <button
+                            onClick={() => { setDestinationDropdownOpen(!destinationDropdownOpen); setOriginDropdownOpen(false) }}
+                            className={`flex items-center gap-2 pl-2.5 pr-3.5 py-2 bg-white rounded-full shadow-sm text-[14px] font-medium text-[#202223] hover:shadow-md transition-all ${destinationDropdownOpen ? 'ring-2 ring-[#8c9196]' : ''}`}
+                          >
+                            <span className="w-7 h-7 rounded-full bg-[#e3f1df] flex items-center justify-center">
+                              <span className="text-[#1a7f37] scale-[0.85]">{Icons.store}</span>
+                            </span>
+                            {selectedDestination.name.split(' ')[0]}
+                            <svg className={`w-4 h-4 text-[#8c9196] transition-transform ${destinationDropdownOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </button>
+                          {/* Destination dropdown */}
+                          {destinationDropdownOpen && (
+                            <div className="absolute top-full left-0 mt-1 w-52 bg-white rounded-xl shadow-lg border border-[#e4e5e7] py-1.5 z-10">
+                              {LOCATIONS.filter(loc => loc.id !== selectedOrigin?.id).map(loc => (
+                                <button
+                                  key={loc.id}
+                                  onClick={() => { setSelectedDestination(loc); setDestinationDropdownOpen(false) }}
+                                  className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-[13px] hover:bg-[#f6f6f7] transition-colors ${
+                                    selectedDestination.id === loc.id ? 'bg-[#f2f3f5]' : ''
+                                  }`}
+                                >
+                                  <span className={`w-7 h-7 rounded-full flex items-center justify-center ${
+                                    loc.type === 'warehouse' ? 'bg-[#f6f6f7]' : 'bg-[#e3f1df]'
+                                  }`}>
+                                    <span className={`scale-[0.7] ${loc.type === 'warehouse' ? 'text-[#5c5c5c]' : 'text-[#1a7f37]'}`}>
+                                      {loc.type === 'warehouse' ? Icons.inventory : Icons.store}
                                     </span>
-                                    <span className="text-[#202223]">{loc.name}</span>
-                                    {selectedDestination.id === loc.id && (
-                                      <svg className="w-4 h-4 text-[#1a7f37] ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                      </svg>
-                                    )}
-                                  </button>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
+                                  </span>
+                                  <span className="text-[#202223]">{loc.name}</span>
+                                  {selectedDestination.id === loc.id && (
+                                    <svg className="w-4 h-4 text-[#1a7f37] ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                  )}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
-                  )}
+
+                    {/* Quick actions - right side */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] font-medium text-[#8c9196] uppercase tracking-wide">Quick transfer</span>
+                      <div className="flex items-center gap-1.5">
+                        {WORKFLOW_SHORTCUTS.map((shortcut) => (
+                          <button
+                            key={shortcut.id}
+                            onClick={() => applyShortcut(shortcut)}
+                            className={`px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all ${
+                              selectedDestination?.id === shortcut.destination
+                                ? 'bg-[#303030] text-white'
+                                : 'bg-[#f6f6f7] text-[#5c5c5c] hover:bg-[#ebebeb] hover:text-[#303030]'
+                            }`}
+                          >
+                            {shortcut.label}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="w-px h-5 bg-[#e3e3e3] mx-1" />
+                      <button className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[12px] font-medium text-[#6d6d6d] hover:bg-[#f6f6f7] hover:text-[#303030] transition-all">
+                        <svg viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
+                          <path fillRule="evenodd" d="M10 3a.75.75 0 0 1 .75.75V9h5.25a.75.75 0 0 1 0 1.5h-5.25v5.25a.75.75 0 0 1-1.5 0v-5.25h-5.25a.75.75 0 0 1 0-1.5h5.25v-5.25A.75.75 0 0 1 10 3Z"/>
+                        </svg>
+                        Template
+                      </button>
+                    </div>
+                  </div>
 
                   {/* Main input area */}
                   {step !== 'review' && step !== 'quantity' && (
@@ -1409,6 +1814,25 @@ export default function StripeDemoPage() {
   const [isCommandKOpen, setIsCommandKOpen] = useState(false)
   const [movements, setMovements] = useState<Movement[]>(INITIAL_MOVEMENTS)
   const [movementCounter, setMovementCounter] = useState(2)
+  const [startCreatingMovement, setStartCreatingMovement] = useState(false)
+  const [shouldResetMovementCreation, setShouldResetMovementCreation] = useState(false)
+
+  // Handler for navigating to movements with creation mode
+  const handleNavigateToCreateMovement = useCallback(() => {
+    setStartCreatingMovement(true)
+    setCurrentPage('movements')
+  }, [])
+
+  // Handler for sidebar navigation - resets creation mode when navigating to movements
+  const handleNavigate = useCallback((page: Page) => {
+    if (page === 'movements' && currentPage === 'movements') {
+      // If already on movements page, trigger reset
+      setShouldResetMovementCreation(true)
+    } else if (page === 'movements') {
+      setStartCreatingMovement(false) // Reset to show the list, not creation mode
+    }
+    setCurrentPage(page)
+  }, [currentPage])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -1462,14 +1886,23 @@ export default function StripeDemoPage() {
       <ShopifyHeader onSearchClick={() => setIsCommandKOpen(true)} />
 
       <div className="flex flex-1 overflow-hidden">
-        <Sidebar currentPage={currentPage} onNavigate={setCurrentPage} />
+        <Sidebar currentPage={currentPage} onNavigate={handleNavigate} />
 
         <main className="flex-1 overflow-hidden flex flex-col">
-          {currentPage === 'inventory' && <InventoryPage />}
+          {currentPage === 'inventory' && (
+            <InventoryPage
+              onNavigate={setCurrentPage}
+              onCreateMovement={handleNavigateToCreateMovement}
+            />
+          )}
           {currentPage === 'movements' && (
             <MovementsPage
               movements={movements}
               onCreateMovement={handleCreateMovement}
+              startInCreationMode={startCreatingMovement}
+              onCreationModeConsumed={() => setStartCreatingMovement(false)}
+              shouldResetCreation={shouldResetMovementCreation}
+              onResetConsumed={() => setShouldResetMovementCreation(false)}
             />
           )}
         </main>
