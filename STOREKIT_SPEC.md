@@ -61,7 +61,7 @@ Create `Products.storekit` for local testing:
       "internalID": "pro_monthly",
       "localizations": [
         {
-          "description": "Unlimited quotes, AI chat, voice mode",
+          "description": "Unlimited AI chat, voice mode, and more",
           "displayName": "Epilogue Pro Monthly",
           "locale": "en_US"
         }
@@ -77,7 +77,7 @@ Create `Products.storekit` for local testing:
       "internalID": "pro_annual",
       "localizations": [
         {
-          "description": "Unlimited quotes, AI chat, voice mode",
+          "description": "Unlimited AI chat, voice mode, and more",
           "displayName": "Epilogue Pro Annual",
           "locale": "en_US"
         }
@@ -322,27 +322,24 @@ final class UsageManager: ObservableObject {
 
     // MARK: - Published State
 
+    // Note: Books, notes, and quotes are FREE and UNLIMITED (table stakes)
+    // Only AI-powered features are metered
+
     @Published private(set) var aiMessagesUsed: Int = 0
-    @Published private(set) var quotesCaputuredThisMonth: Int = 0
     @Published private(set) var voiceMinutesUsed: Int = 0
     @Published private(set) var themeAnalysesUsed: Int = 0
-    @Published private(set) var quoteExportsUsed: Int = 0
 
     // MARK: - Limits
 
     struct Limits {
         // Free tier limits
         static let freeAIMessages = 15
-        static let freeQuoteCaptures = 10
         static let freeThemeAnalyses = 1
-        static let freeQuoteExports = 3
 
         // Pro tier limits
         static let proAIMessages = 200
         static let proVoiceMinutes = 60
-        static let proQuoteCaptures = Int.max
         static let proThemeAnalyses = Int.max
-        static let proQuoteExports = Int.max
     }
 
     // MARK: - Computed Properties
@@ -352,21 +349,15 @@ final class UsageManager: ObservableObject {
         return max(0, limit - aiMessagesUsed)
     }
 
-    var quoteCapturesRemaining: Int {
-        let limit = isPro ? Limits.proQuoteCaptures : Limits.freeQuoteCaptures
-        return max(0, limit - quotesCaputuredThisMonth)
-    }
-
     var voiceMinutesRemaining: Int {
         guard isPro else { return 0 }
         return max(0, Limits.proVoiceMinutes - voiceMinutesUsed)
     }
 
     var canUseAI: Bool { aiMessagesRemaining > 0 }
-    var canCaptureQuote: Bool { quoteCapturesRemaining > 0 }
     var canUseVoice: Bool { isPro && voiceMinutesRemaining > 0 }
     var canAnalyzeTheme: Bool { isPro || themeAnalysesUsed < Limits.freeThemeAnalyses }
-    var canExportQuote: Bool { isPro || quoteExportsUsed < Limits.freeQuoteExports }
+    var canExportWithoutWatermark: Bool { isPro }
 
     // MARK: - Dependencies
 
@@ -391,11 +382,6 @@ final class UsageManager: ObservableObject {
         saveUsage()
     }
 
-    func recordQuoteCapture() {
-        quotesCaputuredThisMonth += 1
-        saveUsage()
-    }
-
     func recordVoiceMinutes(_ minutes: Int) {
         voiceMinutesUsed += minutes
         saveUsage()
@@ -403,11 +389,6 @@ final class UsageManager: ObservableObject {
 
     func recordThemeAnalysis() {
         themeAnalysesUsed += 1
-        saveUsage()
-    }
-
-    func recordQuoteExport() {
-        quoteExportsUsed += 1
         saveUsage()
     }
 
@@ -425,10 +406,8 @@ final class UsageManager: ObservableObject {
 
     private func resetMonthlyUsage() {
         aiMessagesUsed = 0
-        quotesCaputuredThisMonth = 0
         voiceMinutesUsed = 0
         themeAnalysesUsed = 0
-        quoteExportsUsed = 0
         storage.lastResetDate = Date()
         saveUsage()
     }
@@ -437,18 +416,14 @@ final class UsageManager: ObservableObject {
 
     private func loadUsage() {
         aiMessagesUsed = storage.aiMessagesUsed
-        quotesCaputuredThisMonth = storage.quoteCapturesUsed
         voiceMinutesUsed = storage.voiceMinutesUsed
         themeAnalysesUsed = storage.themeAnalysesUsed
-        quoteExportsUsed = storage.quoteExportsUsed
     }
 
     private func saveUsage() {
         storage.aiMessagesUsed = aiMessagesUsed
-        storage.quoteCapturesUsed = quotesCaputuredThisMonth
         storage.voiceMinutesUsed = voiceMinutesUsed
         storage.themeAnalysesUsed = themeAnalysesUsed
-        storage.quoteExportsUsed = quoteExportsUsed
     }
 }
 
@@ -465,11 +440,6 @@ final class UsageStorage {
         set { defaults.set(newValue, forKey: "\(suite).aiMessages") }
     }
 
-    var quoteCapturesUsed: Int {
-        get { defaults.integer(forKey: "\(suite).quoteCaptures") }
-        set { defaults.set(newValue, forKey: "\(suite).quoteCaptures") }
-    }
-
     var voiceMinutesUsed: Int {
         get { defaults.integer(forKey: "\(suite).voiceMinutes") }
         set { defaults.set(newValue, forKey: "\(suite).voiceMinutes") }
@@ -478,11 +448,6 @@ final class UsageStorage {
     var themeAnalysesUsed: Int {
         get { defaults.integer(forKey: "\(suite).themeAnalyses") }
         set { defaults.set(newValue, forKey: "\(suite).themeAnalyses") }
-    }
-
-    var quoteExportsUsed: Int {
-        get { defaults.integer(forKey: "\(suite).quoteExports") }
-        set { defaults.set(newValue, forKey: "\(suite).quoteExports") }
     }
 
     var lastResetDate: Date? {
@@ -503,8 +468,8 @@ import SwiftUI
 
 // MARK: - Feature Enum
 
+// Note: Books, notes, and quotes are FREE (table stakes) - not gated
 enum Feature: String, CaseIterable {
-    case unlimitedQuotes
     case watermarkFreeExport
     case unlimitedAI
     case ambientVoice
@@ -517,7 +482,7 @@ enum Feature: String, CaseIterable {
         switch self {
         case .ambientVoice, .prioritySupport, .earlyAccess:
             return true // Hard paywall
-        case .unlimitedQuotes, .watermarkFreeExport, .unlimitedAI,
+        case .watermarkFreeExport, .unlimitedAI,
              .fullAnalytics, .unlimitedThemes:
             return false // Metered or partial free access
         }
@@ -525,7 +490,6 @@ enum Feature: String, CaseIterable {
 
     var displayName: String {
         switch self {
-        case .unlimitedQuotes: return "Unlimited Quote Capture"
         case .watermarkFreeExport: return "Watermark-Free Exports"
         case .unlimitedAI: return "Unlimited AI Chat"
         case .ambientVoice: return "Ambient Voice Mode"
@@ -538,8 +502,6 @@ enum Feature: String, CaseIterable {
 
     var description: String {
         switch self {
-        case .unlimitedQuotes:
-            return "Capture every meaningful passage without limits"
         case .watermarkFreeExport:
             return "Share beautiful quote cards without branding"
         case .unlimitedAI:
@@ -559,7 +521,6 @@ enum Feature: String, CaseIterable {
 
     var iconName: String {
         switch self {
-        case .unlimitedQuotes: return "quote.bubble.fill"
         case .watermarkFreeExport: return "square.and.arrow.up.fill"
         case .unlimitedAI: return "bubble.left.and.bubble.right.fill"
         case .ambientVoice: return "waveform.circle.fill"
@@ -599,14 +560,12 @@ struct FeatureGateModifier: ViewModifier {
         if subscriptionManager.isPro { return true }
 
         switch feature {
-        case .unlimitedQuotes:
-            return usageManager.canCaptureQuote
         case .unlimitedAI:
             return usageManager.canUseAI
         case .unlimitedThemes:
             return usageManager.canAnalyzeTheme
         case .watermarkFreeExport:
-            return usageManager.canExportQuote
+            return usageManager.canExportWithoutWatermark
         case .ambientVoice, .fullAnalytics, .prioritySupport, .earlyAccess:
             return false
         }
@@ -622,9 +581,15 @@ extension View {
 // MARK: - Usage Example
 
 /*
- Button("Capture Quote") { }
-     .gated(for: .unlimitedQuotes) {
-         viewModel.captureQuote()
+ // Quote capture is FREE - no gating needed!
+ Button("Capture Quote") {
+     viewModel.captureQuote()
+ }
+
+ // AI chat is metered
+ Button("Chat with AI") { }
+     .gated(for: .unlimitedAI) {
+         viewModel.startAIChat()
      }
  */
 ```
@@ -1008,10 +973,12 @@ struct EpilogueApp: App {
 
 ## Usage Tracking
 - [ ] AI message counter increments
-- [ ] Quote capture counter increments
+- [ ] Voice minutes counter increments
+- [ ] Theme analysis counter increments
 - [ ] Monthly reset occurs correctly
 - [ ] Limits persist across app restart
 - [ ] Pro limits applied when subscribed
+- [ ] Quote capture works without limits (table stakes)
 
 ## Edge Cases
 - [ ] No network during purchase

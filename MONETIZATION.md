@@ -9,9 +9,11 @@
 Epilogue sits at the intersection of two proven markets: **book tracking apps** ($5-50/year) and **AI assistant apps** ($20/month). This unique positioning allows premium pricing above typical reading apps while delivering clear value through AI-powered features that justify the cost.
 
 **Recommended pricing:**
-- **Free tier**: Generous library + limited AI
+- **Free tier**: Full library, notes, quotes + limited AI
 - **Pro tier**: $6.99/month or $49.99/year (40% annual discount)
 - **No higher tier** initially—keep it simple
+
+**Core philosophy**: Books, notes, and quotes are table stakes—always unlimited and free. AI features are the premium differentiator.
 
 ---
 
@@ -54,15 +56,16 @@ Epilogue sits at the intersection of two proven markets: **book tracking apps** 
 
 ### Free Tier: "Reader"
 
-**Philosophy**: Make the core reading companion experience excellent. Let users fall in love with the app before encountering limits.
+**Philosophy**: Make the core reading companion experience excellent. Books, notes, and quotes are **table stakes**—always free and unlimited. AI features are the upsell.
 
 | Feature | Access | Limit |
 |---------|--------|-------|
 | Library management | ✅ Full | Unlimited books |
 | Book search & add | ✅ Full | — |
 | Reading status tracking | ✅ Full | — |
-| Quote capture (OCR) | ✅ Full | **10 quotes/month** |
-| Quote card export | ⚠️ Limited | Watermarked, 3/month |
+| Notes & annotations | ✅ Full | Unlimited |
+| Quote capture (OCR) | ✅ Full | **Unlimited** |
+| Quote card export | ⚠️ Limited | Watermarked |
 | AI chat | ⚠️ Limited | **15 messages/month** |
 | Ambient voice mode | ❌ Locked | Pro only |
 | Theme detection | ⚠️ Limited | 1 book/month |
@@ -70,20 +73,19 @@ Epilogue sits at the intersection of two proven markets: **book tracking apps** 
 | iCloud sync | ✅ Full | — |
 
 **Rationale**:
-- Library management is table stakes—must be unlimited to compete with Goodreads
-- Quote capture is the hook—10/month is enough to demonstrate value but not enough for power users
+- **Books, notes, quotes are table stakes**—limiting these would kill retention and feel cheap
+- Quote card export has watermark for organic growth (shareable content = free marketing)
 - AI chat limit (15 messages) costs ~$0.15-0.30/user/month in tokens—acceptable for acquisition
 - Ambient voice is high-cost, high-value—perfect upsell feature
 
 ### Pro Tier: $6.99/month or $49.99/year
 
-**Philosophy**: Remove all friction for serious readers. The price point is deliberately below the "AI app" mental model ($20) but above basic book trackers ($3-5).
+**Philosophy**: Unlock the full AI-powered experience. Core features (books, notes, quotes) are already free—Pro is about intelligence and polish.
 
 | Feature | Access |
 |---------|--------|
-| Library management | ✅ Full |
-| Quote capture (OCR) | ✅ **Unlimited** |
-| Quote card export | ✅ **No watermark, unlimited** |
+| Everything in Free | ✅ Included |
+| Quote card export | ✅ **No watermark, custom themes** |
 | AI chat | ✅ **200 messages/month** |
 | Ambient voice mode | ✅ **Unlocked** (60 min/month) |
 | Theme detection | ✅ **Unlimited books** |
@@ -92,10 +94,11 @@ Epilogue sits at the intersection of two proven markets: **book tracking apps** 
 | Priority support | ✅ 24-hour response |
 | Early access | ✅ Beta features |
 
-**Why not higher AI limits?**
-- 200 messages/month = ~$2-4 in Claude API costs at current rates
-- This is sustainable at $6.99/month after Apple's 30% cut ($4.89 net)
-- Power users who hit limits are rare; they become your advocates
+**Pro value proposition**: "Your reading life, supercharged with AI"
+- Unlimited AI conversations about your books
+- Voice mode for hands-free book discussions
+- Deep theme analysis across your entire library
+- Beautiful, shareable quote cards without branding
 
 **Why $6.99 and not $9.99?**
 - Price sensitivity research shows $6.99 is a psychological threshold
@@ -116,22 +119,16 @@ Considered but rejected:
 
 ### Detailed Breakdown
 
-#### Library Management — FREE
-- **Why free**: This is the core value prop. Locking it would kill retention.
-- **Implementation**: No limits on books, shelves, tags, or organization
-- **Upsell opportunity**: None—this builds habit and trust
-
-#### Quote Capture (OCR) — METERED FREE
-- **Why metered**: OCR is cheap (~$0.001/image) but quote capture is the "magic moment"
-- **Free limit**: 10 quotes/month—enough to capture favorite passages from 2-3 books
-- **Pro unlock**: Unlimited captures
-- **UX**: Soft limit with counter ("7 of 10 captures used this month")
+#### Library, Notes & Quotes — FREE (Table Stakes)
+- **Why free**: These are the core value prop. Limiting them would kill retention and feel cheap compared to Goodreads.
+- **Implementation**: No limits on books, shelves, tags, notes, or quote captures
+- **Upsell opportunity**: None—this builds habit and trust. Users who love their library will want AI to discuss it.
 
 #### Quote Card Export — LIMITED FREE
 - **Why limited**: Export is shareable—watermark drives organic growth
-- **Free version**: Small "Made with Epilogue" watermark, 3 exports/month
-- **Pro version**: Clean exports, custom themes, unlimited
-- **Implementation**: Watermark should be tasteful, not obnoxious
+- **Free version**: Small "Made with Epilogue" watermark
+- **Pro version**: Clean exports, custom themes
+- **Implementation**: Watermark should be tasteful, positioned bottom-right, small logo + "epilogue.app"
 
 #### AI Chat — METERED FREE
 - **Why metered**: AI tokens cost real money; must control costs
@@ -171,8 +168,8 @@ Show paywall when user tries to access locked features:
 
 ```
 User taps "Ambient Voice" → Paywall with voice demo
-User hits quote limit → Paywall highlighting unlimited captures
-User tries watermark-free export → Paywall showing clean preview
+User taps "Analyze Themes" (2nd+ book) → Paywall highlighting unlimited analysis
+User tries watermark-free export → Paywall showing clean preview side-by-side
 ```
 
 **Design**: Full-screen modal with:
@@ -306,8 +303,10 @@ After week of daily use: "You're a power reader—upgrade for more"
 | Claude API (AI chat) | $2.50 | ~200 msgs × $0.0125 avg |
 | Claude API (themes) | $0.50 | ~5 analyses × $0.10 |
 | Voice synthesis | $1.50 | ~60 min × $0.025/min |
-| OCR processing | $0.10 | Negligible |
-| **Total variable** | **$4.60** | |
+| OCR processing | ~$0 | Negligible (free tier too) |
+| **Total variable** | **$4.50** | |
+
+Note: OCR for quote capture is nearly free (~$0.001/image) so unlimited quotes have minimal cost impact.
 
 ### Revenue Math
 
