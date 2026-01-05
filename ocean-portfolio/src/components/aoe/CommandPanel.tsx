@@ -11,8 +11,9 @@ import type { Agent, Building, AgentType, BuildingType } from '@/lib/aoe-types'
 // ============================================================================
 
 export default function CommandPanel() {
-  const { state, spawnAgent, assignTask, getSelectedAgents, clearSelection } = useOrchestrator()
+  const { state, spawnAgent, assignRealTask, getSelectedAgents, clearSelection } = useOrchestrator()
   const [showTaskModal, setShowTaskModal] = useState(false)
+  const [useRealAgents, setUseRealAgents] = useState(true) // Toggle for real vs simulated
 
   const selectedAgents = getSelectedAgents()
   const selectedBuilding = state.buildings.find(b => b.isSelected)
@@ -98,12 +99,18 @@ export default function CommandPanel() {
           <TaskModal
             agents={selectedAgents}
             onClose={() => setShowTaskModal(false)}
-            onAssign={(task) => {
-              selectedAgents.forEach(agent => {
+            onAssign={async (task) => {
+              // Use real agents - spawn actual Claude agents
+              for (const agent of selectedAgents) {
                 if (agent.status === 'idle') {
-                  assignTask(agent.id, task)
+                  await assignRealTask(agent.id, {
+                    name: task.name,
+                    description: task.description,
+                    targetFile: task.targetFile,
+                    targetDirectory: task.targetDirectory,
+                  })
                 }
-              })
+              }
               setShowTaskModal(false)
             }}
           />

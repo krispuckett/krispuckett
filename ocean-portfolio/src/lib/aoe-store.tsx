@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useReducer, useCallback, ReactNode } from 'react'
+import { createContext, useContext, useReducer, useCallback, useRef, ReactNode } from 'react'
 import type {
   OrchestratorState,
   OrchestratorEvent,
@@ -13,6 +13,8 @@ import type {
   Notification,
   CodebaseNode,
 } from './aoe-types'
+import { spawnAgent as spawnRealAgent, subscribeToAgent, agentTypeToRole } from './agents/client'
+import type { AgentEvent } from './agents/client'
 
 // ============================================================================
 // Initial State
@@ -463,6 +465,7 @@ interface OrchestratorContextType {
   setControlGroup: (num: number) => void
   recallControlGroup: (num: number) => void
   assignTask: (agentId: string, task: Omit<Task, 'id' | 'createdAt' | 'status' | 'assignedAgent' | 'actualTokens'>) => void
+  assignRealTask: (agentId: string, task: { name: string; description: string; targetFile?: string; targetDirectory?: string }) => Promise<void>
   completeTask: (taskId: string, result: string, tokensUsed: number) => void
   failTask: (taskId: string, error: string) => void
   getSelectedAgents: () => Agent[]
@@ -510,6 +513,9 @@ export function OrchestratorProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'RECALL_CONTROL_GROUP', number: num })
   }, [])
 
+  // Store for SSE cleanup functions
+  const sseCleanups = useRef<Map<string, () => void>>(new Map())
+
   const assignTask = useCallback((
     agentId: string,
     task: Omit<Task, 'id' | 'createdAt' | 'status' | 'assignedAgent' | 'actualTokens'>
@@ -520,6 +526,136 @@ export function OrchestratorProvider({ children }: { children: ReactNode }) {
       task: { ...task, actualTokens: 0 },
     })
   }, [])
+
+  // Assign a REAL task using the Claude Agent API
+  const assignRealTask = useCallback(async (
+    agentId: string,
+    task: {
+      name: string
+      description: string
+      targetFile?: string
+      targetDirectory?: string
+    }
+  ) => {
+    const agent = state.agents.find(a => a.id === agentId)
+    if (!agent) return
+
+    // Create task in local state
+    const taskId = `task-${Date.now()}`
+    dispatch({
+      type: 'ASSIGN_TASK',
+      agentId,
+      task: {
+        name: task.name,
+        description: task.description,
+        priority: 'normal',
+        estimatedTokens: 2000,
+        progress: 0,
+        targetFile: task.targetFile,
+        targetDirectory: task.targetDirectory,
+        actualTokens: 0,
+      },
+    })
+
+    try {
+      // Spawn real agent via API
+      const response = await spawnRealAgent({
+        task: task.description,
+        role: agentTypeToRole(agent.type),
+        targetPath: task.targetFile || task.targetDirectory,
+      })
+
+      // Subscribe to progress updates via SSE
+      const cleanup = subscribeToAgent(
+        response.id,
+        (event: AgentEvent) => {
+          // Update task progress based on events
+          if (event.type === 'thinking' && event.iteration) {
+            dispatch({
+              type: 'UPDATE_TASK',
+              taskId,
+              updates: {
+                progress: Math.min(90, event.iteration * 10),
+              },
+            })
+          }
+
+          if (event.type === 'complete') {
+            dispatch({
+              type: 'UPDATE_TASK',
+              taskId,
+              updates: {
+                status: 'completed',
+                result: event.content,
+                actualTokens: event.tokensUsed || 0,
+                progress: 100,
+                completedAt: Date.now(),
+              },
+            })
+            dispatch({
+              type: 'ADD_NOTIFICATION',
+              notification: {
+                type: 'success',
+                message: `${agent.name} completed: ${task.name}`,
+                sound: 'task-complete',
+              },
+            })
+            // Clean up SSE connection
+            cleanup()
+            sseCleanups.current.delete(response.id)
+          }
+
+          if (event.type === 'error') {
+            dispatch({
+              type: 'UPDATE_TASK',
+              taskId,
+              updates: {
+                status: 'failed',
+                error: event.content,
+                completedAt: Date.now(),
+              },
+            })
+            dispatch({
+              type: 'ADD_NOTIFICATION',
+              notification: {
+                type: 'error',
+                message: `${agent.name} failed: ${event.content}`,
+                sound: 'error',
+              },
+            })
+            cleanup()
+            sseCleanups.current.delete(response.id)
+          }
+        },
+        (error) => {
+          console.error('SSE error:', error)
+          dispatch({
+            type: 'UPDATE_TASK',
+            taskId,
+            updates: {
+              status: 'failed',
+              error: 'Connection lost',
+              completedAt: Date.now(),
+            },
+          })
+        }
+      )
+
+      // Store cleanup function
+      sseCleanups.current.set(response.id, cleanup)
+
+    } catch (error) {
+      dispatch({
+        type: 'UPDATE_TASK',
+        taskId,
+        updates: {
+          status: 'failed',
+          error: error instanceof Error ? error.message : 'Failed to spawn agent',
+          completedAt: Date.now(),
+        },
+      })
+    }
+  }, [state.agents])
 
   const completeTask = useCallback((taskId: string, result: string, tokensUsed: number) => {
     dispatch({
@@ -583,6 +719,7 @@ export function OrchestratorProvider({ children }: { children: ReactNode }) {
         setControlGroup,
         recallControlGroup,
         assignTask,
+        assignRealTask,
         completeTask,
         failTask,
         getSelectedAgents,
